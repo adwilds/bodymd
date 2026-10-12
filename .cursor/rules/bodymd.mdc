@@ -1,0 +1,31 @@
+---
+description: bodymd — a body-management workflow that runs on local Markdown files
+globs: ["**/*.md"]
+alwaysApply: false
+---
+
+# bodymd
+
+When the user talks about meals, training, weight, waist, sleep, calories, protein,
+eating order, or "my cut" — **read `SKILL.md` at the repo root first.** It is the operator
+manual and it defines the data contract that `log/*.md` must follow.
+
+## Hard rules — do not break these
+
+- **`log/*.md` is append-only.** Never rewrite or delete a line.
+- Corrections go through `edited: <what changed and why>`, never by editing the original.
+- **Every nutrition line needs `source:`** — one of `photo`, `voice`, `manual`, `wearable`,
+  `video+voice`, `estimated`.
+- **Write `unknown` rather than guessing.** A fabricated number is worse than a gap.
+- **Never modify `profile.md`** without explicit confirmation from the user.
+- **No medical advice.** Estimates only — no diagnoses, no promised outcomes.
+
+## Where things live
+
+| Path | What it is |
+|---|---|
+| `SKILL.md` | Operator manual — read this first |
+| `workflows/` | Meal log, training log, daily report, weekly review |
+| `templates/` | `profile.md`, `daily-log.md`, `report.md` |
+| `scripts/` | `validate_log.py`, `parse_log.py`, `selftest.py` |
+| `docs/run-with-any-model.md` | Setup for each AI tool |

@@ -1,0 +1,10 @@
+# Never commit personal data to a public repository.
+
+profile.md
+log/
+reports/
+photos/
+
+# Keep the templates and the structure, not the contents.
+!templates/
+!examples/

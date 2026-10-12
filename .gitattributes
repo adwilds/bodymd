@@ -1,0 +1,12 @@
+# Normalize line endings: keep LF in the repository and on checkout,
+# so the Python scripts and Markdown behave identically on every platform.
+* text=auto eol=lf
+
+*.py   text eol=lf
+*.md   text eol=lf
+*.mdc  text eol=lf
+*.gitignore text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.pdf  binary
