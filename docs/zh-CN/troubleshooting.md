@@ -52,7 +52,7 @@
 改完必须写进 `edited:`：
 
 ```markdown
-- 12:30 番茄炒蛋 + 米饭 | 540 kcal · protein 22 g | source: photo | edited: 米饭按 2 碗计，AI 估 1.5 碗
+- 12:30 | lunch | 番茄炒蛋 + 米饭 | 540 kcal | P22 C62 F18 | photo: photos/2026-10-12/1230.jpg | source: photo | edited: 米饭按 2 碗计，AI 估 1.5 碗
 ```
 
 这一行不是记账。**它就是让明天的模型（可能是另一家的）从你的修正开始，而不是从零开始的唯一机制。** 见 `SKILL.md` §3.4。

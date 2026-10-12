@@ -67,11 +67,11 @@ Each entry is one line. Never rewrite history; append only.
 
 ```markdown
 ## Meals
-- 08:20 | breakfast | 520 kcal | P42 C48 F16 | photo: photos/2026-10-12/0820.jpg | edited: none
-- 13:05 | lunch     | 566 kcal | P52 C61 F14 | photo: photos/2026-10-12/1305.jpg | edited: rice 150g->120g
+- 08:20 | breakfast | 燕麦 60g + 鸡蛋 3 个 + 牛奶 250ml | 505 kcal | P42 C48 F16 | photo: photos/2026-10-12/0820.jpg | source: photo | edited: none
+- 13:05 | lunch | 鸡胸 150g + 米饭 + 西兰花 | 570 kcal | P54 C55 F15 | photo: photos/2026-10-12/1305.jpg | source: photo | edited: 米饭 150g->120g
 
 ## Training
-- exercise: deadlift | set: 3 | reps: 12 | load_kg: 60 | rpe: 7 | source: video
+- exercise: deadlift | set: 3 | reps: 12 | load_kg: 60 | rpe: 7 | source: video+voice
 - session_burn_kcal: 275
 
 ## Sleep
@@ -87,10 +87,16 @@ Each entry is one line. Never rewrite history; append only.
 ### 3.4 Rules of the contract
 
 1. **Append only.** Never delete or silently rewrite a prior entry.
-2. **Always record `source`** on numbers: `photo` | `voice` | `manual` | `wearable`.
+2. **Always record `source`** on numbers. Legal values:
+   `photo` | `voice` | `manual` | `wearable` | `video+voice` | `estimated`.
+   It must be its own `|`-separated field — putting confidence inside it
+   (`source: photo · conf: medium`) fails validation. Confidence goes in its own field.
 3. **Always record `edited`** when the user changes an AI estimate. This is the accuracy feedback loop.
 4. **Machine-readable first.** Keep the bullet syntax identical so a script can parse it.
 5. **No proprietary format.** Markdown only. No databases, no exports needed.
+6. **Rest days: omit the `## Training` section entirely.** A placeholder line inside it
+   (`- rest day`) is parsed as a training set and fails validation. Note the rest day in
+   `## Notes` instead: `- Rest day, no training section.`
 
 ---
 
@@ -172,7 +178,7 @@ Deficit       480 kcal        target <=600      [ok]
 Protein       128 / 145 g                       [-17 g]
 Sleep         7h 20m
 Training      deadlift 3x12 @60kg               done
-Next session  deadlift @62.5kg
+Next session  deadlift @65kg
 
 ## What changed
 - protein below target: add 25 g at dinner

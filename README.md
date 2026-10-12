@@ -22,6 +22,10 @@
 
 **→ [Quick start](#quick-start)** ・ **[What a day looks like](#how-it-works)** ・ **[Something is broken](#something-is-broken)** ・ **[FAQ](docs/faq.md)**
 
+**Want to see it before you set anything up?** [`examples/walkthrough.md`](examples/walkthrough.md)
+is one complete day plus a Sunday review — the actual files, the actual prompts, and the actual
+output of the scripts.
+
 ---
 
 ## The thing that bothered me
@@ -58,17 +62,16 @@ are expected to argue with:
 
 ```markdown
 ## Meals
-- 21:12 辣椒炒肉 + 米饭 (2 碗) | 720 kcal · protein 32 g | order: protein first ✗ | source: photo · conf: medium
-- 21:30 一杯酸奶 | 130 kcal · protein 6 g | source: photo
-- edited: 米饭 按 2 碗计（AI 估 1.5 碗）；用户改
+- 21:12 | dinner | 辣椒炒肉 + 米饭 (2 碗) | 720 kcal | P32 C68 F36 | photo: photos/2026-10-12/2112.jpg | source: photo | edited: 米饭按 2 碗计（AI 估 1.5 碗）
+- 21:30 | snack | 酸奶 1 杯 | 130 kcal | P6 C15 F5 | photo: photos/2026-10-12/2130.jpg | source: photo | edited: none
 ```
 
-You fix the rice estimate. You write down that you fixed it. The correction stays in the file
-permanently — so tomorrow's model, a different one, from a different company, starts from your
-correction instead of from zero.
+You fix the rice estimate. You write that correction into `edited:` on the same line. It stays in
+the file permanently — so tomorrow's model, a different one, from a different company, starts from
+your correction instead of from zero.
 
-That last line is the whole product. **`edited:` is how a workflow gets more accurate while
-the model underneath keeps changing.**
+**The `edited:` field is the whole product.** It is how a workflow gets more accurate while the
+model underneath keeps changing.
 
 Then it totals the day — sleep, intake, expenditure — tells you whether you are inside your
 deficit, and gives you exactly one thing to change tomorrow. On Sunday it does the only
@@ -102,6 +105,7 @@ any of this outlives the next model release.
 | `docs/` | Why local data, BYOK setup, user guide, dev guide, testing plan, FAQ |
 | `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (13 checks, stdlib only) |
 | `scripts/` | Reference implementation: contract validator + weekly aggregator |
+| `examples/walkthrough.md` | ⭐ **A complete run, start to finish** — one day plus the weekly review, with the real files and the real script output |
 | `examples/sample-week.md` | One worked week, with what each lesson changed in this repo |
 | `examples/fixtures/` | 8 fabricated test users × 7 days |
 | `README.zh.md` | The Chinese front page — `吃练记 · 薄肌手册`, written natively, not translated |

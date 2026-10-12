@@ -56,7 +56,7 @@ If your numbers are consistently low, this is why — before blaming the model.
 When you correct an estimate, you must write it in `edited:`:
 
 ```markdown
-- 12:30 番茄炒蛋 + 米饭 | 540 kcal · protein 22 g | source: photo | edited: 米饭按 2 碗计，AI 估 1.5 碗
+- 12:30 | lunch | 番茄炒蛋 + 米饭 | 540 kcal | P22 C62 F18 | photo: photos/2026-10-12/1230.jpg | source: photo | edited: 米饭按 2 碗计，AI 估 1.5 碗
 ```
 
 That line is not bookkeeping. It is what makes tomorrow's model — possibly a different one —
