@@ -81,7 +81,7 @@ requirement that day is exercising, so the fixture doubles as its own test asser
 # Layer L1 — contract validation. Expect: 0 fatal.
 python3 scripts/validate_log.py examples/fixtures/
 
-# Layer L2 — aggregation. Expect: 8 personas × 7 days = 56 rows.
+# Layer L2 — aggregation. Expect: 8 personas × 7 days + one extra week for CN-01 = 63 rows.
 python3 scripts/parse_log.py examples/fixtures/
 ```
 
@@ -91,3 +91,24 @@ Warnings are expected and **intended** — several days deliberately omit `load_
 > The contract's design constraint (`scripts/validate_log.py`, docstring): *"能降级为警告的，
 > 绝不当致命错误 —— 用户的记录不完整是常态，校验器的职责是提示，不是拒绝。"*
 > These fixtures exist to prove that claim.
+
+---
+
+## 6. Growing this set
+
+Fixtures are meant to grow — one honest step at a time. The procedure, its hard rules (never
+invent provenance, never claim real users, the validator is the arbiter), the per-cycle
+definition of done, and the ordered list of **coverage gaps still open** are in
+**[`CYCLE.md`](CYCLE.md)**.
+
+Two things worth knowing before you add data:
+
+- **One gap per cycle.** A cycle that changes five things cannot be reviewed, and when a gate
+  fails you cannot tell which change broke it.
+- **A gap is closed when it is *testable*, not when it is *present*.** `CN-01` carries two weeks
+  precisely because a single-week fixture makes every "this week vs last week" rule in
+  `workflows/04-weekly-review.md` unreachable — the data looked fine and proved nothing.
+
+`CYCLE.md` also records when the loop is **finished** — that is, when every listed gap is closed
+and the gates are still green. At that point the right answer is "the fixture set is complete
+for this contract", not "add more personas".

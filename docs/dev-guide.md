@@ -79,6 +79,29 @@ python3 scripts/validate_log.py examples/fixtures/
 
 全部 fixture 通过才允许提交。
 
+### 3.4 聚合（`parse_log.py`）
+
+```bash
+python3 scripts/parse_log.py examples/fixtures/          # 目标取自文件头注释（fixture 用）
+python3 scripts/parse_log.py log/                        # 目标取自该目录下的 profile.md
+python3 scripts/parse_log.py log/ --protein=150          # 或显式指定
+```
+
+**分组粒度是 `(档案, ISO 周)`，不是「档案」。** 初版按档案聚合，两周会被混成一个平均数，
+于是文档承诺的「体重趋势（当周均值 − 上周均值）」永远算不出来，`workflows/04-weekly-review.md`
+里所有关于「连续两周」的规则全都无法触发 —— **文档写了、代码没有、测试看不见**。
+聚合粒度一旦错，规则就退化成装饰。
+
+新增一个 fixture 时，有两条硬要求：
+
+1. **必须在文件头注释里带 `protein target <N> g`**，否则该档案的达标列是 `——`。
+   宁可显示 `——` 也不要猜一个目标：一个读错的目标会让整列安静地错掉。
+2. **想测「周对周」，就必须给同一个档案至少两周数据**。单周 fixture 里的趋势断言，
+   测的只是 `None` 分支。
+
+`--protein=` 这种 `=` 写法是刻意的：写成 `--protein 150` 会与位置参数（目录）的解析
+纠缠在一起，而这支脚本的调用者里包含 AI，**含糊的参数解析对它比对人类更贵**。
+
 ---
 
 ## 四、如何新增一个工作流

@@ -288,15 +288,19 @@ Run against the seven files above, the real output is:
 [通过]   log/2026-10-12.md
 [通过]   log/2026-10-13.md
 [通过]   log/2026-10-14.md
+  [INFO] 第 0 行：未找到 ## Training 段落（休息日可接受）
 [通过]   log/2026-10-15.md
 [通过]   log/2026-10-16.md
+  [INFO] 第 0 行：未找到 ## Training 段落（休息日可接受）
 [通过]   log/2026-10-17.md
 [通过]   log/2026-10-18.md
+  [INFO] 第 0 行：未找到 ## Training 段落（休息日可接受）
 --------------------------------------------------------
 检查 7 个文件：致命 0 项，警告 0 项
 ```
 
-(The blank lines between files are trimmed above, nothing else.)
+(The blank lines between files are trimmed above, nothing else. The three `[INFO]` lines are
+the rest days — a missing `## Training` section is *reported*, not punished.)
 
 Exit code `0` = clean, `1` = at least one fatal, `2` = warnings only. Each code (V1-V9) and the
 exact fix is in [`../docs/troubleshooting.md`](../docs/troubleshooting.md) §8.
@@ -319,20 +323,36 @@ log         2026-10-15      1,950    150   2,250     300      3  totals
 log         2026-10-16      2,240    108   2,150     -90      0  totals
 log         2026-10-17      1,780    120   2,300     520      3  totals
 log         2026-10-18      1,690    102   2,050     360      0  totals
-----------------------------------------------------------------------------
-log                    天数  7   平均缺口 339 kcal/天       训练 4 天
 
-提示：蛋白达标天数需与 profile.md 的 protein_target_g 比对后计算。
-重算规则见 workflows/04-weekly-review.md。
+按 ISO 周聚合（周复盘的三个变量）
+====================================================================================
+档案        ISO 周        天         平均缺口       体重均值         趋势         蛋白达标     训练
+------------------------------------------------------------------------------------
+log       2026-W42    7       339 kcal   74.64 kg         ——    3/7 @145g   4 天
+
+读法：
+  · 体重趋势 = 当周 7 天体重均值 − 上一周 7 天体重均值。首周显示「——」是正常的。
+  · 蛋白达标按目标的 90% 计（不是 100%），见 workflows/04-weekly-review.md。
+  · 只有一周数据时，周对周规则无法判定 —— 这不是脚本的缺陷，是数据的缺陷。
 ```
 
-**Look at the `339`.** It is the same `339` as the weekly review in step 7, and it is a script's
-output rather than a model's arithmetic. That is the whole argument for a rigid line format: the
-review stops being the model's opinion about your week and becomes a computation over your files.
+**Look at the last table.** It contains all three of step 7's numbers: `339 kcal`, the weight mean
+`74.64 kg` (reported as `74.6` in the review), and `3/7` adherence. They are a **script's output**,
+not a model's arithmetic. That is the whole argument for a rigid line format: the review stops
+being the model's opinion about your week and becomes a computation over your files.
+
+**And the `——` in the trend column is the honest part.** With one week of data, "falling" and
+"flat for two weeks" are unanswerable — those rules are statements about *two* weeks. A tool that
+printed a number there would be inventing one. `CN-01` in
+[`fixtures/personas.md`](fixtures/personas.md) is the two-week case where a real trend appears.
 
 The `档案` (record) column reads `log` because that is the **folder** name. The folder is the
 identity when you keep one file per day — so if you later keep two people's logs, use
 `log-alice/` and `log-bob/` and the same command reports two records.
+
+**The date range and the ISO week number are printed together** (`2026-W42`) so the seven days
+are never ambiguous. Week 42 of 2026 is 12–18 October; if your tool and the script disagree about
+which days that is, you will see it here rather than three weeks later in a wrong conclusion.
 
 ---
 

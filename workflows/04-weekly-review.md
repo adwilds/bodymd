@@ -11,7 +11,7 @@ This is the step that separates bodymd from a calorie diary. **The diary records
 ## Steps
 
 1. Read the last 7 daily reports.
-2. Compute the three weekly aggregates.
+2. Compute the three weekly aggregates (or read them from `scripts/parse_log.py`).
 3. Compare against `profile.md`.
 4. Propose target changes, with the arithmetic shown.
 5. Write the changes back to `profile.md` **only after the user confirms**.
@@ -28,6 +28,27 @@ This is the step that separates bodymd from a calorie diary. **The diary records
 | **Protein adherence** | days hitting >=90% of target, out of 7 | whether the intake side is actually being executed |
 
 **Use the 7-day mean, never a single day's weight.** Daily fluctuation is mostly water.
+
+**Where these three numbers come from.** The aggregator computes all of them, grouped by ISO
+week, so the arithmetic is reproducible instead of retyped:
+
+```bash
+python3 scripts/parse_log.py log/                 # reads protein_target_g from profile.md
+python3 scripts/parse_log.py log/ --protein=150   # or state the target explicitly
+```
+
+Its second table prints one row per ISO week with exactly these three columns plus the trend
+against the previous week. **Read that table rather than re-deriving it** — a second
+implementation of the same formula will disagree with the first one eventually, and then you
+will not know which number to trust.
+
+Two things the script deliberately refuses to do:
+
+- **It will not invent a trend from one week.** A first week prints `——`. "Falling" and
+  "flat for two weeks" are statements about two weeks; with one week of data they are unanswerable.
+- **It will not guess a protein target.** The target comes from `profile.md`, or from the
+  `--protein=` flag. If neither exists, the adherence column prints `——` instead of assuming
+  a number — same rule as everywhere else in this repo: `unknown` is a legal value, a guess is not.
 
 ---
 

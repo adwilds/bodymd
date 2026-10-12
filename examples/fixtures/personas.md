@@ -1,7 +1,9 @@
 # personas.md — the eight fabricated users
 
-Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)**. Same window for all eight, so weekly
-aggregates are directly comparable.
+Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all eight, so weekly aggregates are
+directly comparable. **`CN-01` additionally carries `2026-09-07 .. 2026-09-13`** — a second,
+earlier week, because the weekly review recalculates from *this week vs last week* and a
+single-week fixture can never exercise that path. See the two-week table below.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -172,12 +174,12 @@ analysis from zero. A report that says "eat more protein" without noticing she d
 
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **56 days / 8 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **63 days / 8 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
 |---|---|---|---|---|
-| `CN-01` | 7 | 449 kcal | 5 | Protein 74–129 g vs a 150 g target; 1 day on the `computed` path |
+| `CN-01` | 14 | 446 / 449 kcal | 9 | Two ISO weeks; protein 69–129 g vs a 150 g target, **0/7 days hit**; 1 day on the `computed` path. See the two-week table below |
 | `CN-02` | 7 | 234 kcal | 3 | 3 days weight `unknown`; 1 manual correction; 1 `computed` day |
 | `US-01` | 7 | 687 kcal | 4 | 1 meal logged as `unknown`; Saturday +3,510 kcal (−610) |
 | `US-02` | 7 | 442 kcal (6 days) | 4 | Alcohol + chips; Friday −390; Saturday has no Totals → `——` |
@@ -193,4 +195,34 @@ every weekly average upward — this fixture exists to catch that.
 
 **Note on `MX-01`:** it is the only file that triggers `WARN` (2 items), by design, to prove
 the validator degrades instead of rejecting. Everything else is clean.
+
+---
+
+## `CN-01` across its two ISO weeks
+
+This is the only place in the repo where a **week-over-week** number can be computed, and
+therefore the only place where `workflows/04-weekly-review.md`'s recalculation rules can be
+checked at all. Both rules that begin with "two consecutive weeks" or "vs last week" are
+unreachable without it.
+
+| ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
+|---|---|---|---|---|---|---|---|
+| `2026-W37` | 09-07 → 09-13 | 7 | 446 kcal | 82.73 kg | `——` (first week) | 0/7 @150 g | 4 days |
+| `2026-W38` | 09-14 → 09-20 | 7 | 449 kcal | 82.01 kg | **−0.71 kg** | 0/7 @150 g | 5 days |
+
+**What a correct review must conclude.** Weight is falling (−0.71 kg/week ≈ 0.9% of bodyweight),
+which would normally trigger *"reduce deficit by 100 kcal"*. **It must not.** Protein adherence
+is 0/7, and the rule that fires first is:
+
+> if protein adherence < 5 of 7 days → **do not change calories; fix protein first**
+
+The whole point of this fixture pair is that the *weight* signal says one thing and the
+*adherence* signal says another, and the documented order of precedence picks adherence. A
+report that proposes a calorie change here has skipped the check that separates this system
+from a calorie diary.
+
+**On the trend arithmetic.** It is the mean of the seven daily weights, not the first minus
+the last. Using endpoints would let two days of water weight decide a whole week's conclusion:
+`82.4 − 81.6 = −0.8 kg` looks like a bigger drop than the true `−0.71 kg`, and neither number
+is the one the rules are calibrated against.
 

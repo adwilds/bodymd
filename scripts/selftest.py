@@ -32,7 +32,8 @@ FIXTURES = ROOT / "examples" / "fixtures"
 
 # 期望值 —— 全部来自 docs/testing.md 与 examples/fixtures/personas.md 的公开承诺。
 EXPECTED_PERSONAS = 8
-EXPECTED_DAYS = 56
+# CN-01 是两周（09-07..09-13 + 09-14..09-20），其余 7 人是 09-14..09-20 一周
+EXPECTED_DAYS = 63
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -71,7 +72,7 @@ REQUIRED_FILES = [
     "scripts/validate_log.py", "scripts/parse_log.py", "scripts/selftest.py",
     "examples/walkthrough.md", "docs/zh-CN/walkthrough.md",
     "examples/sample-week.md", "examples/fixtures/README.md",
-    "examples/fixtures/personas.md",
+    "examples/fixtures/personas.md", "examples/fixtures/CYCLE.md",
 ]
 
 # 文档里出现的日志示例行也要符合契约 —— 见 T16。
@@ -86,6 +87,7 @@ SAMPLE_SOURCE_DOCS = [
     "docs/troubleshooting.md", "docs/zh-CN/troubleshooting.md",
     "docs/user-guide.md", "docs/dev-guide.md",
     "docs/zh-CN/user-guide.md",
+    "examples/fixtures/CYCLE.md",
 ]
 
 PERSONA_IDS = ["CN-01", "CN-02", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
@@ -512,6 +514,92 @@ def main(argv: list) -> int:
               f"CN-01 09-14 burn={None if burn is None else burn.session_burn_kcal} "
               f"expenditure={None if burn is None else burn.expenditure_kcal}；"
               f"无 Totals 日 expenditure={None if no_totals is None else no_totals.expenditure_kcal}")
+
+    # --- T18 周是计量单位：两周必须分成两行，且趋势可算 --------------------
+    # 动机：全部 fixture 曾经只有一周，所以「这一周 vs 上一周」这条路径零覆盖 ——
+    # 而 workflows/04-weekly-review.md 的每一条重算规则都建立在它上面。
+    # 旧实现按「档案」聚合，两周被混成一个平均数，体重趋势永远是「——」，
+    # 于是"平台期连续两周"这条规则永远无法被触发。聚合粒度错了，规则就是装饰。
+    label_weeks = {}
+    for path in sorted(FIXTURES.glob("*.md")):
+        for rec in parse_log.parse_file(path):
+            label_weeks.setdefault(rec.label, set()).add(parse_log.iso_week_of(rec.day))
+
+    weeks_cn01 = sorted(label_weeks.get("CN-01", set()))
+    others_single = all(
+        len(weeks) == 1 for lab, weeks in label_weeks.items() if lab != "CN-01"
+    )
+
+    rows18 = parse_log.weekly_rows(records, {})
+    cn01_rows = [r for r in rows18 if r["label"] == "CN-01"]
+    trend = cn01_rows[-1]["trend"] if len(cn01_rows) == 2 else None
+    first_trend_none = bool(cn01_rows) and cn01_rows[0]["trend"] is None
+
+    ok18 = (len(weeks_cn01) == 2
+            and others_single
+            and len(cn01_rows) == 2
+            and first_trend_none
+            and trend is not None
+            and abs(trend - (-0.71)) < 0.02)
+    rep.check("T18 两周分成两个 ISO 周，体重趋势按 7 天均值算出", ok18,
+              f"CN-01 周={weeks_cn01} 趋势={trend} 首周趋势=None?{first_trend_none} "
+              f"其余档案均为单周={others_single}")
+
+    # --- T19 蛋白达标按 90% 阈值、且逐档案用自己的目标 ----------------------
+    # 动机：旧实现根本不计算这项，只打印「提示：需与 protein_target_g 比对后计算」——
+    # 把三个聚合里最容易被忽略、也最能证伪"我在执行"的那一个，推回给了用户。
+    # 两个容易错的地方：① 用 100% 而不是 90%（会系统性低估执行率）
+    #                  ② 所有档案共用一个目标（170cm 的女生按 178cm 男生的标准判）
+    targets19 = {}
+    for path in sorted(FIXTURES.glob("*.md")):
+        lab = parse_log.label_for(path)
+        tgt = parse_log.header_protein_target(path)
+        if tgt:
+            targets19[lab] = tgt
+
+    rows19 = parse_log.weekly_rows(records, targets19)
+
+    # 独立重算一遍（不调用 weekly_rows 的分组逻辑），交叉验证
+    grouped19 = {}
+    for rec in records:
+        key = (rec.label, parse_log.iso_week_of(rec.day))
+        grouped19.setdefault(key, []).append(rec)
+    expected19 = {}
+    for (lab, week), items in grouped19.items():
+        tgt = targets19.get(lab)
+        if not tgt:
+            continue
+        hit = sum(1 for r in items if r.protein_g is not None and r.protein_g >= 0.9 * tgt)
+        expected19[(lab, week)] = f"{hit}/{len(items)}"
+
+    mismatch19 = [
+        f"{r['label']} {r['week']}: {r['adherence']}≠{expected19[(r['label'], r['week'])]}"
+        for r in rows19
+        if (r["label"], r["week"]) in expected19
+        and r["adherence"] != expected19[(r["label"], r["week"])]
+    ]
+
+    # 阈值边界：目标 150g → 135.0 必须算达标，134.9 必须不算。
+    # 这条单独拎出来，是因为把 90% 改成 100% 时，上面的交叉验证会一起跟着错，
+    # 只有边界探针能发现。
+    probe = parse_log.DayRecord(date(2026, 9, 14), "CN-01")
+    probe.weight_kg = 82.4
+    probe.protein_g = 135.0
+    at_boundary = parse_log.weekly_rows([probe], {"CN-01": 150})[0]["adherence"] == "1/1"
+    probe.protein_g = 134.9
+    below_boundary = parse_log.weekly_rows([probe], {"CN-01": 150})[0]["adherence"] == "0/1"
+
+    # 逐档案目标确实不同：8 个目标值不应全相同
+    distinct_targets = len({v for v in targets19.values() if v}) >= 6
+
+    ok19 = (not mismatch19
+            and len(expected19) == 9
+            and at_boundary
+            and below_boundary
+            and distinct_targets)
+    rep.check("T19 蛋白达标按 90% 阈值、且逐档案用自己的目标", ok19,
+              f"档案-周数={len(expected19)} 边界135g={at_boundary} 134.9g={below_boundary} "
+              f"目标各不相同={distinct_targets} 不一致={mismatch19[:3]}")
 
     return rep.summary()
 
