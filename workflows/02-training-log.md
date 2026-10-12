@@ -50,13 +50,18 @@ Deadlift — set 3 of 3
   reps      12
   load      60 kg      (voice)
   rpe       7
-  source    video
+  source    video+voice
 
-  Next session:  62.5 kg      (+2.5)
+  Next session:  65 kg      (+5)
   Reason:        all reps hit at RPE 7, below target 8
 
   Session burn: 275 kcal  (estimated)
 ```
+
+Two things in that block are not free choices. `source` is `video+voice` and not `video`, because the
+load came from your voice — the record must name **both** inputs, and `video` alone is not a legal
+value (`SKILL.md` §3.4). And deadlift is a lower-body lift, so the increment is **+5 kg**, not
++2.5 — `SKILL.md` §5.2.
 
 ---
 

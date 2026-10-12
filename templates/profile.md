@@ -4,11 +4,11 @@ Copy this file to the repository root and edit it. Your AI reads it at the start
 
 ```yaml
 # Baseline
-height_cm: 172
+height_cm: 176
 weight_kg: 75.0
-body_fat_est_pct: 29
-age: 36
-sex: male
+body_fat_est_pct: unknown
+age: unknown
+sex: unknown
 
 # Targets
 protein_target_g: 145
@@ -26,13 +26,18 @@ increments_kg:
   lower: 5.0
 
 # Data sources
-wearable: oura
-ai_tool: claude-code
+wearable: none          # oura | whoop | garmin | fitbit | apple-watch | none
+ai_tool: any            # claude-code | codex | cursor | chatgpt | kimi | any
 
 # Meta
 created: 2026-10-12
 last_reviewed: 2026-10-12
 ```
+
+⚠️ **The values above are examples, not defaults.** They belong to the notional example person used
+throughout this repository's docs — not to a real user. **Replace every one of them with yours.**
+`unknown` is a legal value and is better than a guess: a guess gets treated as data, and every
+later calculation inherits it.
 
 ---
 
@@ -44,7 +49,20 @@ last_reviewed: 2026-10-12
 
 **increments_kg** — the smallest realistic step your gym allows. 2.5 kg per side plates is typical for upper body, 5 kg for lower.
 
+**weekly_weight_change_target_pct** — when to *stop* cutting. If the weight trend falls faster than this, the weekly review reduces the deficit.
+
 ⚠️ These are starting points, not prescriptions. This file is a record of *your* decisions.
+
+---
+
+## Which keys actually get read
+
+| Key | Read by |
+|---|---|
+| `protein_target_g`, `deficit_target_kcal` | daily report (`workflows/03`) |
+| `program`, `increments_kg`, `training_days_per_week` | training log (`workflows/02`) |
+| `weekly_weight_change_target_pct` | weekly review (`workflows/04`) |
+| everything else | nothing — it is there so you don't re-explain yourself in every new chat |
 
 ---
 
@@ -53,3 +71,4 @@ last_reviewed: 2026-10-12
 - **This file is yours.** The AI may propose changes in the weekly review, but it must not write to this file without your confirmation.
 - Keep the keys exactly as written. They are the data contract.
 - Add keys if you need them. Removing keys may break older workflows.
+- **Never commit this file to a public repository.** `.gitignore` already excludes it.

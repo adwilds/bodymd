@@ -32,7 +32,7 @@ The better question is: **what do I actually own at the end?**
 
 **Swappability.** When a better model ships, you point your workflow at it. No migration, no re-logging, no "import your history" flow that loses half the fields. The data contract does not care which model reads it.
 
-**Auditability.** Every number in the log carries a `source` field: `photo`, `voice`, `manual`, `wearable`. You can always answer "where did this come from" — including "that was an estimate from a weaker model in October".
+**Auditability.** Every number in the log carries a `source` field — `photo`, `voice`, `manual`, `wearable`, `video+voice`, `estimated` on a meal line, and its own set on training, `## Body` and `## Sleep` lines (`SKILL.md` §3.4). You can always answer "where did this come from" — including "that was an estimate from a weaker model in October".
 
 **Permanence.** A folder survives a startup's shutdown, an acquisition, an API deprecation, and your own changing interests. A `.md` file will be readable in 2050.
 

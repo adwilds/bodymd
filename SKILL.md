@@ -50,53 +50,118 @@ photos/YYYY-MM-DD/             # meal and training photos, referenced not copied
 
 ### 3.2 `profile.md` schema
 
+Copied from `templates/profile.md` and filled in once. Keys are fixed; values are yours.
+
 ```yaml
-height_cm: 172
+# Baseline
+height_cm: 176
 weight_kg: 75.0
-body_fat_est_pct: 29
+body_fat_est_pct: unknown     # legal to leave unknown; most people never measure it
+age: unknown
+sex: unknown
+
+# Targets
 protein_target_g: 145
 deficit_target_kcal: 600
+weekly_weight_change_target_pct: 0.5
+
+# Training
 training_days_per_week: 3.5
 program: [deadlift, squat, bench]
+increments_kg:
+  upper: 2.5
+  lower: 5.0
+
+# Data sources
+wearable: none                # oura | whoop | garmin | fitbit | apple-watch | none
+ai_tool: any
+
+# Meta
 created: 2026-10-12
+last_reviewed: 2026-10-12
 ```
+
+Only `protein_target_g`, `deficit_target_kcal`, `training_days_per_week`, `program` and
+`increments_kg` are read by the daily workflows. The rest exist so a model does not have to guess
+— and so the user does not have to repeat themselves in every new chat window.
+
+`profile.md` is never written by the model without explicit confirmation. It is the user's file.
+
+> **About the example numbers.** Every number in this repository's examples belongs to **one
+> notional example person**. There is no real user behind them, and they are not the author's.
+> They are kept internally consistent so the arithmetic in the examples can actually be checked.
+> The contract prefers your numbers, not these.
 
 ### 3.3 Daily log schema
 
-Each entry is one line. Never rewrite history; append only.
+`templates/daily-log.md` is the canonical blank. Each entry is one line. Never rewrite history;
+append only.
 
 ```markdown
 ## Meals
-- 08:20 | breakfast | 燕麦 60g + 鸡蛋 3 个 + 牛奶 250ml | 505 kcal | P42 C48 F16 | photo: photos/2026-10-12/0820.jpg | source: photo | edited: none
-- 13:05 | lunch | 鸡胸 150g + 米饭 + 西兰花 | 570 kcal | P54 C55 F15 | photo: photos/2026-10-12/1305.jpg | source: photo | edited: 米饭 150g->120g
+- 08:20 | breakfast | 燕麦 60g + 鸡蛋 3 个 + 牛奶 250ml | 520 kcal | P42 C48 F16 | photo: photos/2026-10-12/0820.jpg | source: photo | edited: none | order_ok: yes
+- 13:05 | lunch | 鸡胸 150g + 米饭 + 西兰花 | 566 kcal | P52 C61 F14 | photo: photos/2026-10-12/1305.jpg | source: photo | edited: 米饭 150g->120g | order_ok: no
 
 ## Training
 - exercise: deadlift | set: 3 | reps: 12 | load_kg: 60 | rpe: 7 | source: video+voice
-- session_burn_kcal: 275
+- session_burn_kcal: 275 | source: estimated
 
 ## Sleep
 - hours: 7.33 | source: oura
 
+## Body
+- weight_kg: 74.8 | source: scale | time: 07:10
+- waist_cm: 88.5 | source: tape | weekly
+
+## Supplements
+- item: creatine | dose_g: 5 | source: manual
+
 ## Totals
 - intake_kcal: 1850
-- protein_g: 128
+- protein_g: 148
 - expenditure_kcal: 2330
 - deficit_kcal: 480
 ```
 
+The meal line is positional for the first four fields and keyword-based after that:
+
+```
+time | meal | what you ate | kcal | P/C/F | photo: | source: | edited: | order_ok:
+```
+
 ### 3.4 Rules of the contract
 
-1. **Append only.** Never delete or silently rewrite a prior entry.
-2. **Always record `source`** on numbers. Legal values:
-   `photo` | `voice` | `manual` | `wearable` | `video+voice` | `estimated`.
-   It must be its own `|`-separated field — putting confidence inside it
-   (`source: photo · conf: medium`) fails validation. Confidence goes in its own field.
+1. **Append only — with one precisely defined exception.** Never delete a line, and never change
+   a number without saying so. **A correction updates the `edited:` field of that same line**, so
+   the line itself records that it was corrected and how. Never append a second copy of the same
+   meal: `## Totals` would count it twice, and a doubled meal is worse than a wrong one.
+2. **Always record `source`.** What counts as legal depends on the record type. The six-value set
+   is the one the validator enforces, and it applies to **meal** lines:
+
+   | Record | Legal `source` values |
+   |---|---|
+   | Meals | `photo` · `voice` · `manual` · `wearable` · `video+voice` · `estimated` |
+   | Training | `video+voice` · `voice` · `manual` · `estimated` |
+   | Body | `scale` · `tape` · `manual` · `none` |
+   | Sleep | the device or method, verbatim: `oura`, `whoop`, `garmin`, `fitbit`, `band`, `watch`, `phone`, `self-report` |
+   | Supplements | `manual` · `product-label` |
+
+   `source` is always its own `|`-separated field. Putting confidence inside it
+   (`source: photo · conf: medium`) fails validation — confidence goes in its own field.
+
+   The Sleep list is deliberately open rather than fixed: the point of the field is to record
+   *which* device produced the number, and a hard-coded list of wearables goes stale every year.
+   `Body` uses `none` when you could not measure.
 3. **Always record `edited`** when the user changes an AI estimate. This is the accuracy feedback loop.
 4. **Machine-readable first.** Keep the bullet syntax identical so a script can parse it.
 5. **No proprietary format.** Markdown only. No databases, no exports needed.
 6. **Rest days: omit the `## Training` section entirely.** A placeholder line inside it
    (`- rest day`) is parsed as a training set and fails validation. Note the rest day in
    `## Notes` instead: `- Rest day, no training section.`
+7. **Optional fields stay optional.** Three extensions are in use today — `order_ok` on meal
+   lines, `## Supplements`, and `## Body`. A model that ignores them still produces a valid file;
+   a model that writes them produces a more useful one. Adding a field never requires a migration,
+   which is the whole reason the format is line-based rather than column-based.
 
 ---
 
@@ -123,6 +188,11 @@ Order by this priority unless the user says otherwise:
 4. **Liquid calories and dessert last of all**
 
 Rationale to give the user only if asked: protein first improves satiety and blunts the post-meal glucose curve.
+
+**Close the loop.** Advice that is never checked cannot be improved. When the meal is over, ask one
+question — *"did you eat it in that order?"* — and record the answer as `order_ok: yes` or
+`order_ok: no` on the meal line. It is one word, it is optional, and it is the only way anyone
+ever finds out whether the ordering rule does anything. See §3.3.
 
 ### 4.3 Accuracy honesty
 
@@ -175,13 +245,13 @@ The daily report is one screen. Structure:
 # Daily report — YYYY-MM-DD
 
 Deficit       480 kcal        target <=600      [ok]
-Protein       128 / 145 g                       [-17 g]
+Protein       148 / 145 g                       [+3 g]
 Sleep         7h 20m
 Training      deadlift 3x12 @60kg               done
 Next session  deadlift @65kg
 
 ## What changed
-- protein below target: add 25 g at dinner
+- none: first day inside all three targets
 
 ## Notes
 - lunch estimate edited downward (rice 150g -> 120g)
@@ -192,6 +262,13 @@ Rules:
 - **No alarming language.** No "you failed", no "over budget", no streaks broken.
 - **One actionable line** under "What changed". Not a list of ten.
 - Use neutral labels. Do not colour-code by medical thresholds. See §7.
+
+When there *is* something to change, it is still exactly one line:
+
+```markdown
+## What changed
+- protein below target: add 25 g at dinner
+```
 
 ---
 

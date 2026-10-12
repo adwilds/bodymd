@@ -55,16 +55,35 @@ INTAKE_TOLERANCE = 0.05
 
 REQUIRED_FILES = [
     "SKILL.md", "README.md", "README.zh.md", "LICENSE.md", "PRD.md", "AGENTS.md",
-    ".gitignore", ".cursor/rules/bodymd.mdc", ".github/copilot-instructions.md",
+    ".gitattributes", ".gitignore",
+    ".cursor/rules/bodymd.mdc", ".github/copilot-instructions.md",
+    ".github/ISSUE_TEMPLATE/bug_report.yml", ".github/ISSUE_TEMPLATE/question.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
     "templates/profile.md", "templates/daily-log.md", "templates/report.md",
     "workflows/01-meal-log.md", "workflows/02-training-log.md",
     "workflows/03-daily-report.md", "workflows/04-weekly-review.md",
+    "prompts/meal-analysis.md", "prompts/report-generator.md", "prompts/training-coach.md",
     "docs/testing.md", "docs/dev-guide.md", "docs/user-guide.md",
+    "docs/troubleshooting.md", "docs/zh-CN/troubleshooting.md",
     "docs/run-with-any-model.md", "docs/zh-CN/run-with-any-model.md",
     "docs/byok-setup.md", "docs/faq.md", "docs/why-local-data.md",
     "scripts/validate_log.py", "scripts/parse_log.py", "scripts/selftest.py",
+    "examples/walkthrough.md", "docs/zh-CN/walkthrough.md",
     "examples/sample-week.md", "examples/fixtures/README.md",
     "examples/fixtures/personas.md",
+]
+
+# 文档里出现的日志示例行也要符合契约 —— 见 T16。
+# 这份清单就是"哪些文件里的话会被用户照抄"。少一个文件，这类缺陷就会漏一个。
+SAMPLE_SOURCE_DOCS = [
+    "SKILL.md", "AGENTS.md",
+    "README.md", "README.zh.md",
+    "templates/daily-log.md",
+    "workflows/01-meal-log.md", "workflows/03-daily-report.md",
+    "prompts/training-coach.md",
+    "examples/walkthrough.md", "docs/zh-CN/walkthrough.md",
+    "docs/troubleshooting.md", "docs/zh-CN/troubleshooting.md",
+    "docs/user-guide.md", "docs/dev-guide.md",
 ]
 
 PERSONA_IDS = ["CN-01", "CN-02", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
@@ -153,6 +172,70 @@ def sum_meals(path: Path):
     return out
 
 
+def fenced_source_tokens(path: Path):
+    """从围栏代码块里抽出所有 `source` 后面跟的取值。
+
+    为什么不能只看 `- ` 开头、带 `|` 的行：
+        某些文档把记录渲染成**对齐的字段列表**，不是管道分隔的单行 ——
+        `workflows/02-training-log.md` 里的
+            reps      12
+            source    video
+        就是这样。`video` 不是合取值，但没有哪个只看管道行的检查会发现它。
+    """
+    import re
+    fence = re.compile(r"^\s*```")
+    token_re = re.compile(r"\bsource\b\s*:?\s*([A-Za-z][A-Za-z+\-]*)")
+    out = []
+    inside = False
+    for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if fence.match(raw):
+            inside = not inside
+            continue
+        if not inside:
+            continue
+        for m in token_re.finditer(raw):
+            out.append((lineno, m.group(1)))
+    return out
+
+
+def sample_log_lines(path: Path):
+    """从文档的围栏代码块里抽出"会被用户照抄"的日志行。
+
+    为什么要专门做这个：
+        仓库里最贵的缺陷不是脚本算错，而是**文档给出的示例本身就违反契约**。
+        用户第一次照抄就失败，而且失败的是他第一天唯一的一次尝试。
+        本函数的产出被 T16 拿去跑同一个校验器 —— 文档示例和用户日志用同一把尺子。
+
+    只认两种情况：
+        餐食行 —— 首字段形如 HH:MM
+        训练行 —— 含 exercise: / session_burn
+    含 <placeholder> 或 [placeholder] 的行不算样本（它们是字段说明，不是数据）。
+    `prompts/training-coach.md` 里那种粘贴模板（`- exercise: [name]`）就靠这一条排除：
+    它用的是另一套字段名，本来就不是日志行。
+    """
+    import re
+    fence = re.compile(r"^\s*```")
+    time_re = re.compile(r"^\d{2}:\d{2}$")
+    out = []
+    inside = False
+    for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if fence.match(raw):
+            inside = not inside
+            continue
+        if not inside:
+            continue
+        line = raw.strip()
+        if not line.startswith("- ") or "<" in line or "[" in line:
+            continue
+        body = line[2:].strip()
+        fields = [f.strip() for f in body.split("|")]
+        if time_re.match(fields[0]):
+            out.append(("meal", lineno, body, fields))
+        elif "exercise:" in body or "session_burn" in body:
+            out.append(("training", lineno, body, fields))
+    return out
+
+
 def main(argv: list) -> int:
     verbose = "--verbose" in argv or "-v" in argv
     rep = Report(verbose)
@@ -162,7 +245,7 @@ def main(argv: list) -> int:
 
     # --- T1 结构完整 -------------------------------------------------------
     missing = [p for p in REQUIRED_FILES if not (ROOT / p).exists()]
-    rep.check("T1 必需文件齐全（30 项）", not missing, f"缺失：{missing}")
+    rep.check(f"T1 必需文件齐全（{len(REQUIRED_FILES)} 项）", not missing, f"缺失：{missing}")
 
     # --- T2 SKILL.md 头部 --------------------------------------------------
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -295,6 +378,138 @@ def main(argv: list) -> int:
                 missing_fields.append(f"{pid}:{lineno} 训练缺 source")
     rep.check("T13 所有餐食与训练行均带 source 字段", not missing_fields,
               f"{len(missing_fields)} 处：{missing_fields[:3]}")
+
+    # --- T14 一天一文件布局：身份取目录名，不取日期 ------------------------
+    # 动机：一个真人存成 7 个日文件，输出却写 "7 天 / 7 个档案"。
+    # 文件名只是日期，目录才是身份。
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        daydir = Path(tmp) / "log"
+        daydir.mkdir()
+        for name in ("2026-10-12.md", "2026-10-13.md"):
+            (daydir / name).write_text(
+                "# sample\n\n## Meals\n"
+                "- 08:20 | breakfast | 燕麦 + 鸡蛋 | 520 kcal | P42 C48 F16"
+                " | photo: p.jpg | source: photo | edited: none\n\n"
+                "## Totals\n- intake_kcal: 1850\n- protein_g: 148\n"
+                "- expenditure_kcal: 2330\n- deficit_kcal: 480\n",
+                encoding="utf-8",
+            )
+        flat = []
+        for p in sorted(daydir.glob("*.md")):
+            flat.extend(parse_log.parse_file(p))
+        day_labels = {r.label for r in flat}
+        day_count = len(flat)
+    rep.check("T14 一天一文件布局：标签取目录名（1 个档案，不是 7 个）",
+              day_count == 2 and day_labels == {"log"},
+              f"实际 {day_count} 天 / 标签 {sorted(day_labels)}")
+
+    # --- T15 可选扩展字段不破坏任何东西 -----------------------------------
+    # order_ok / ## Body / ## Supplements 是刻意设计的"可忽略扩展"。
+    # 如果它们让校验器报错，这个契约就不敢长大 —— 而不敢长大的契约会死。
+    with tempfile.TemporaryDirectory() as tmp:
+        opt = Path(tmp) / "2026-10-12.md"
+        opt.write_text(
+            "## Meals\n"
+            "- 08:20 | breakfast | 燕麦 + 鸡蛋 | 520 kcal | P42 C48 F16"
+            " | photo: p.jpg | source: photo | edited: none | order_ok: yes\n\n"
+            "## Body\n- weight_kg: 74.8 | source: scale | time: 07:10\n\n"
+            "## Supplements\n- item: creatine | dose_g: 5 | source: manual\n\n"
+            "## Totals\n- intake_kcal: 1850\n- protein_g: 148\n"
+            "- expenditure_kcal: 2330\n- deficit_kcal: 480\n",
+            encoding="utf-8",
+        )
+        opt_issues = validate_log.check_file(opt)
+        opt_fatal = [i for i in opt_issues if i.level == validate_log.FATAL]
+        opt_recs = parse_log.parse_file(opt)
+        opt_rec = opt_recs[0] if opt_recs else None
+    rep.check("T15 可选字段（order_ok / Body / Supplements）既不报错也不丢数据",
+              not opt_fatal and opt_rec is not None
+              and opt_rec.intake_kcal == 1850 and opt_rec.deficit == 480,
+              f"fatal={[str(i) for i in opt_fatal]} rec={opt_rec}")
+
+    # --- T16 文档里的示例日志行必须过契约 ---------------------------------
+    # 本仓库最贵的一类缺陷：**示例本身违反自己定义的契约**。
+    # 用户照抄第一次就失败，而那是他唯一的一次尝试。
+    # 已经真的发生过 5 次（缺 source、source 值非法、字段不足、休息日写法、
+    # README 首页示例块）。文档示例和用户日志，必须用同一把尺子。
+    bad_samples = []
+    scanned = 0
+    for rel in SAMPLE_SOURCE_DOCS:
+        path = ROOT / rel
+        if not path.exists():
+            bad_samples.append(f"{rel}: 文件不存在")
+            continue
+        for kind, lineno, body, fields in sample_log_lines(path):
+            scanned += 1
+            where = f"{rel}:{lineno}"
+            if kind == "meal":
+                issues = []
+                validate_log.check_meal_line(body, lineno, issues)
+                bad_samples.extend(
+                    f"{where} 餐食行：{i.message}"
+                    for i in issues if i.level == validate_log.FATAL
+                )
+                # 位置字段是 time | meal | 菜品描述 | kcal。
+                # 第 3 位一旦是热量，说明这一行漏了菜品描述。
+                if len(fields) >= 3 and "kcal" in fields[2].lower():
+                    bad_samples.append(f"{where} 餐食行缺少菜品描述字段（第 3 位是热量）")
+            else:
+                if "session_burn" in body:
+                    if "source:" not in body:
+                        bad_samples.append(
+                            f"{where} session_burn_kcal 缺 source（§5.3 要求标注 estimated）"
+                        )
+                    continue
+                issues = []
+                validate_log.check_training_line(body, lineno, issues)
+                bad_samples.extend(
+                    f"{where} 训练行：{i.message}"
+                    for i in issues if i.level == validate_log.FATAL
+                )
+    rep.check(f"T16 文档示例日志行符合契约（扫描 {scanned} 行）", not bad_samples,
+              f"{len(bad_samples)} 处：{bad_samples[:4]}")
+
+    # --- T16b 文档里出现的每个 source 取值都必须是公布过的 -----------------
+    # 动机：文档曾公布 6 个取值，仓库里实际用了 15 个；`wearable` 公布了却 0 次使用，
+    # `scale` / `tape` / `self-report` / `video` 用了却没公布。
+    # 一份"合法取值"清单如果和真实用法不一致，它就不是契约，是装饰。
+    PUBLISHED = {
+        "photo", "voice", "manual", "wearable", "video+voice", "estimated",   # 餐食
+        "scale", "tape", "none",                                              # ## Body
+        "oura", "whoop", "garmin", "fitbit", "band", "watch", "phone",        # ## Sleep
+        "self-report", "product-label",                                       # Sleep / 补剂
+    }
+    unknown_sources = []
+    tokens_seen = 0
+    for rel in SAMPLE_SOURCE_DOCS:
+        path = ROOT / rel
+        if not path.exists():
+            continue
+        for lineno, token in fenced_source_tokens(path):
+            tokens_seen += 1
+            if token not in PUBLISHED:
+                unknown_sources.append(f"{rel}:{lineno} source={token}")
+    rep.check(f"T16b 文档中的 source 取值全部已公布（{tokens_seen} 处）",
+              not unknown_sources,
+              f"未公布：{unknown_sources[:4]}")
+
+    # --- T17 单次训练消耗 ≠ 全天消耗 --------------------------------------
+    # 动机：旧实现把 "session_burn_kcal" 也算进了 expenditure_kcal。
+    # 这两个数差一个数量级（260 vs 2650），一旦被当成同一个，缺口会错到毫无意义。
+    # 而"全天消耗只能来自 ## Totals"这条，正是 T9「无 Totals → 缺口必须是 unknown」
+    # 的前提 —— 两处必须一致。
+    burn = index.get(("CN-01", "2026-09-14"))
+    ok17 = (burn is not None
+            and burn.session_burn_kcal == 260        # ## Training 里的 session_burn_kcal
+            and burn.expenditure_kcal == 2650        # ## Totals 里的 expenditure_kcal
+            and burn.session_burn_kcal != burn.expenditure_kcal)
+    no_totals = index.get(EXPECTED_UNKNOWN_DEFICIT)
+    ok17 = ok17 and no_totals is not None and no_totals.expenditure_kcal is None
+    rep.check("T17 单次训练消耗与全天消耗是两个字段，不互相污染", ok17,
+              f"CN-01 09-14 burn={None if burn is None else burn.session_burn_kcal} "
+              f"expenditure={None if burn is None else burn.expenditure_kcal}；"
+              f"无 Totals 日 expenditure={None if no_totals is None else no_totals.expenditure_kcal}")
 
     return rep.summary()
 

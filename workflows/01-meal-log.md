@@ -30,6 +30,9 @@ If no photo and no description, ask one question: *"What did you eat?"* Do not a
 6. **Produce the eating order.**
 7. **Present for editing.** One edit step per item.
 8. **Append to `log/YYYY-MM-DD.md`** with the `## Meals` line format.
+9. **Close the loop on the order.** Once, after the meal, ask *"did you eat it in that order?"* and
+   append `order_ok: yes` or `order_ok: no` to that meal's line. Skipping this is allowed — but an
+   ordering rule nobody ever checks is a rule nobody can improve. See `SKILL.md` §4.2.
 
 ---
 
@@ -50,6 +53,8 @@ Lunch — 566 kcal, P52 C61 F14
     3. white rice
 
   [edit any line]   [confirm]
+
+  later:  order_ok?  [yes]  [no]
 ```
 
 ---

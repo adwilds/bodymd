@@ -1,7 +1,14 @@
-# Example — one real week (anonymized)
+# Example — one week of reports
 
-A 36-year-old male, 172 cm, 74.6 kg at the start. Three training days, four rest days.
-Published with permission. Numbers are as logged, including the mistakes.
+A notional example person — 176 cm, 74.6 kg at the start. Three training days, four rest days.
+
+**Nobody logged this week.** It is a worked example, built to be internally consistent so you can
+check the arithmetic, including the mistakes. It is not a real user's data, and this project does
+not have users yet. `../docs/testing.md` §8 defines what a real user test would be and what result
+would count as a failure.
+
+> The five of seven days shown below are detailed; days 6 and 7 are summarised only in the weekly
+> review. That is why the review says "5 of 7" while five reports are printed.
 
 ---
 
@@ -14,7 +21,7 @@ Deficit       480 kcal        target <=600      ok
 Protein       148 / 145 g                       +3 g
 Sleep         7h 20m
 Training      deadlift 3x12 @60 kg              done
-Next session  deadlift @62.5 kg
+Next session  deadlift @65 kg
 
 What changed
 - none: first day inside all three targets
@@ -24,7 +31,7 @@ Notes
 - dinner out; oil estimate is the weakest number today
 ```
 
-**What actually happened:** first day using the system. The AI put white rice first in the eating order. Corrected manually — protein first. That correction is the reason the workflow now has an explicit ordering rule instead of a note.
+**What the day shows:** first day using the system. The AI put white rice first in the eating order. Corrected manually — protein first. That correction is the reason the workflow now has an explicit ordering rule instead of a note.
 
 ---
 
@@ -44,7 +51,7 @@ Notes
 - skipped the pre-bed protein because of a 21:00 call
 ```
 
-**What actually happened:** low day. The system did not flag it as a failure, which is the point — a red "you failed" screen on day 2 is where most people quit. The weekly review picked up the pattern instead (see below).
+**What the day shows:** low day. The system did not flag it as a failure, which is the point — a red "you failed" screen on day 2 is where most people quit. The weekly review picked up the pattern instead (see below).
 
 ---
 
@@ -65,7 +72,7 @@ Notes
 - burned 310 kcal estimated
 ```
 
-**What actually happened:** the video analysis correctly identified squat and counted 12 reps in all three sets. It could not see the weight. Two seconds to say "forty kilos" — that is the entire cost of the platform limitation.
+**What the day shows:** the video analysis correctly identified squat and counted 12 reps in all three sets. It could not see the weight. Two seconds to say "forty kilos" — that is the entire cost of the platform limitation.
 
 ---
 
@@ -104,7 +111,7 @@ Notes
 - bench reps missed (10 of 12); holding load next session
 ```
 
-**What actually happened:** the progression rule fired correctly. Two reps missed -> repeat the load instead of adding weight. A simpler system would have added 2.5 kg and produced a bad session the following week.
+**What the day shows:** the progression rule fired correctly. Two reps missed -> repeat the load instead of adding weight. A simpler system would have added 2.5 kg and produced a bad session the following week.
 
 ---
 
@@ -140,4 +147,6 @@ Open question
 | A "failure" label was demotivating on day 2 | The daily report uses three neutral states instead of pass/fail |
 | Restaurant meals are the weakest estimate | `workflows/01-meal-log.md` now requires confidence labelling and a widened range |
 
-**This is how the project was built: three people, fourteen days, manually, before a single line of code.**
+**The intended build order is this: three people, fourteen days, done by hand, before a single
+line of code.** That test has not been run yet — `../docs/testing.md` §8 defines it, and defines
+what result would make it a failure.

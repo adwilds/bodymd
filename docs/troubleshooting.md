@@ -117,15 +117,24 @@ invent precision it does not have.
 
 ## 7. It rewrote an entry I already wrote
 
-The log is **append-only** (`SKILL.md` §3.4). A correction is a **new** `edited:` line, never a
-silent overwrite of the old one — you need to be able to see that the number changed and why.
+The log is **append-only** (`SKILL.md` §3.4) — which means **nothing changes silently**, not that
+every change is a new line. A correction updates the `edited:` field of that same line, so the line
+records what was changed and why:
+
+```markdown
+- 13:05 | lunch | 鸡胸 150g + 米饭 + 西兰花 | 570 kcal | P54 C55 F15 | photo: photos/2026-10-12/1305.jpg | source: photo | edited: 米饭 150g->120g
+```
+
+**Do not append a second copy of the same meal.** It would double-count in `## Totals`, and a
+doubled meal is worse than a wrong one.
 
 Recovery:
 
 1. If you keep the folder in git: `git diff` to see exactly what changed, `git checkout` to undo.
 2. Otherwise: the previous figure is usually in your chat history — copy it back and add the
    `edited:` line.
-3. Then tell the AI: *"The log is append-only. Never rewrite an existing line."*
+3. Then tell the AI: *"Nothing in the log changes silently. If you change a number, `edited:` must
+   say what changed."*
 
 This is also the argument for backing the folder up with git, even privately. Two of the eight
 fixture personas exist precisely to test this class of mess.
@@ -149,8 +158,8 @@ Exit code `0` = pass · `1` = fatal present · `2` = warnings only.
 | Code | Level | Meaning | Fix |
 |---|---|---|---|
 | V1 | FATAL | Meal line has fewer than 6 `|`-separated fields | Re-check the line structure in `SKILL.md` §3.3 |
-| V2 | FATAL | No `source:` on the line | Every nutrition record must state its source |
-| V3 | FATAL | `source:` value not allowed | Legal values: `photo`, `voice`, `manual`, `wearable`, `video+voice`, `estimated` |
+| V2 | FATAL | No `source:` on a meal line | Every nutrition record must state its source |
+| V3 | FATAL | `source:` value not allowed | Meal lines accept `photo`, `voice`, `manual`, `wearable`, `video+voice`, `estimated`. **Training, `## Body` and `## Sleep` use different sets** — the full table is `SKILL.md` §3.4 |
 | V4 | WARN | No `edited:` field | Write `edited: none` if you changed nothing |
 | V5 | FATAL | No kcal number and no explicit `unknown` | Either the number, or the literal word `unknown` |
 | V6 | FATAL | Training line missing `exercise:` or `reps:` | Both are required |
@@ -162,7 +171,7 @@ Exit code `0` = pass · `1` = fatal present · `2` = warnings only.
 Expected output on a healthy repo:
 
 ```bash
-python3 scripts/selftest.py                          # 13 checks → 13/13 PASS
+python3 scripts/selftest.py                          # 18 checks → 18/18 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → 0 fatal, 2 warnings (both intended)
 python3 scripts/parse_log.py    examples/fixtures/   # → 56 days / 8 personas
 ```

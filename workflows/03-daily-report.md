@@ -23,17 +23,21 @@
 # Daily report — YYYY-MM-DD
 
 Deficit       480 kcal        target <=600      ok
-Protein       128 / 145 g                       -17 g
+Protein       148 / 145 g                       +3 g
 Sleep         7h 20m
 Training      deadlift 3x12 @60 kg              done
-Next session  deadlift @62.5 kg
+Next session  deadlift @65 kg
 
 What changed
-- protein below target: add 25 g at dinner
+- none: first day inside all three targets
 
 Notes
 - lunch estimate edited downward (rice 150g -> 120g)
 ```
+
+This is the same day as the one in `templates/daily-log.md` — so the numbers can be checked
+against each other. If your model's report does not reconcile with the log it was reading, the
+model is the problem, not the format.
 
 ---
 

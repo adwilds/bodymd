@@ -90,7 +90,7 @@
 | `docs/zh-CN/troubleshooting.md` | ⭐ **出问题时看这个。** 我真实踩过的十个坑 + 校验器错误码对照表 |
 | `README.md` | 英文首页 —— `bodymd`，原生写的，不是从中文翻过去的 |
 | `docs/` | 为什么放本地、BYOK 配置、使用手册、开发手册、测试方案、FAQ、英文故障排查 |
-| `scripts/selftest.py` | ⭐ 一条命令证明整个仓库完好（13 项检查，零依赖） |
+| `scripts/selftest.py` | ⭐ 一条命令证明整个仓库完好（18 项检查，零依赖） |
 | `scripts/` | 参考实现：契约校验器 + 周聚合器 |
 | `docs/zh-CN/walkthrough.md` | ⭐ **完整示例** —— 一天 + 周日复盘，真实文件、真实输出 |
 | `examples/sample-week.md` | 真实跑过的一周，含「这条教训改了什么」 |
@@ -159,7 +159,7 @@ cp templates/profile.md profile.md     # 打开它，填你自己的数字
 ### 路径 C — 先跑测试
 
 ```bash
-python3 scripts/selftest.py                          # 13 项检查 → 预期 13/13 通过
+python3 scripts/selftest.py                          # 18 项检查 → 预期 18/18 通过
 python3 scripts/validate_log.py examples/fixtures/   # → 预期 0 致命，2 警告
 python3 scripts/parse_log.py    examples/fixtures/   # → 预期 56 天 / 8 个档案
 ```

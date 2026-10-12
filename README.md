@@ -103,7 +103,7 @@ any of this outlives the next model release.
 | `docs/run-with-any-model.md` | ⭐ Setup for each tool — Claude Code, Codex, Cursor, ChatGPT, Kimi, 豆包 |
 | `docs/troubleshooting.md` | ⭐ **When something breaks.** The ten failures I have seen, with fixes, plus the validator's error codes |
 | `docs/` | Why local data, BYOK setup, user guide, dev guide, testing plan, FAQ |
-| `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (13 checks, stdlib only) |
+| `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (18 checks, stdlib only) |
 | `scripts/` | Reference implementation: contract validator + weekly aggregator |
 | `examples/walkthrough.md` | ⭐ **A complete run, start to finish** — one day plus the weekly review, with the real files and the real script output |
 | `examples/sample-week.md` | One worked week, with what each lesson changed in this repo |
@@ -182,7 +182,7 @@ notes: [`docs/run-with-any-model.md`](docs/run-with-any-model.md).
 ### Path C — just run the tests
 
 ```bash
-python3 scripts/selftest.py                          # 13 checks → expect 13/13 PASS
+python3 scripts/selftest.py                          # 18 checks → expect 18/18 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → expect 0 fatal, 2 warnings
 python3 scripts/parse_log.py    examples/fixtures/   # → expect 56 days / 8 personas
 ```

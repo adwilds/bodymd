@@ -9,12 +9,16 @@
 
 支持的两种文件布局：
     A) 一天一文件，日期在文件名里      —— log/2026-10-12.md
+       身份标签取**目录名**（log / people/alice …），不是日期
     B) 一档案多天，用 "# YYYY-MM-DD" 分隔 —— examples/fixtures/CN-01.md
+       身份标签取**文件名**（persona 名）
 
 设计约束：
     1. 仅依赖标准库
     2. 优先读取 ## Totals 段（用户或 AI 已算好）；缺失时自行累加，并标注来源
     3. 未知字段忽略，不中断 —— 保证契约向后兼容
+    4. 未知段落忽略，不中断 —— 所以 order_ok / ## Body / ## Supplements
+       这类可选扩展不会让旧解析器崩
 
 输出：
     日明细 + 平均缺口 / 蛋白记录天数 / 训练天数
@@ -59,9 +63,10 @@ class DayRecord:
         self.label = label          # 用于输出的身份标签（多档案模式下为 persona 名）
         self.intake_kcal = None
         self.protein_g = None
-        self.expenditure_kcal = None
+        self.expenditure_kcal = None   # 全天消耗，只来自 ## Totals
         self.deficit_kcal = None
         self.training_sets = 0
+        self.session_burn_kcal = None  # 单次训练消耗，**不等于**全天消耗
         self.source_note = "totals"  # totals | computed
 
     def finalize(self, computed_intake: float, computed_protein: float) -> None:
@@ -118,9 +123,16 @@ def parse_text_block(lines: list, day: date, label: str) -> DayRecord:
 
         elif section == "training":
             if "session_burn" in body.lower():
-                burn = KCAL_PATTERN.search(body)
-                if burn:
-                    record.expenditure_kcal = float(burn.group(1))
+                # 记录单次训练消耗。**不要**把它当成全天消耗 —— 它是全天消耗的一个
+                # 组成部分，拿它当分母会把缺口算错一个数量级。
+                value = kv_of(body).get("session_burn_kcal")
+                burn = _to_float(value) if value is not None else None
+                if burn is None:
+                    # 兼容 "- 275 kcal" 这类把数字写在 kcal 前面的写法
+                    hit = KCAL_PATTERN.search(body)
+                    burn = float(hit.group(1)) if hit else None
+                if burn is not None:
+                    record.session_burn_kcal = burn
             elif "exercise" in body.lower():
                 record.training_sets += 1
 
@@ -130,7 +142,7 @@ def parse_text_block(lines: list, day: date, label: str) -> DayRecord:
                 record.intake_kcal = _to_float(kv["intake_kcal"])
             if "protein_g" in kv:
                 record.protein_g = _to_float(kv["protein_g"])
-            if "expenditure_kcal" in kv and record.expenditure_kcal is None:
+            if "expenditure_kcal" in kv:
                 record.expenditure_kcal = _to_float(kv["expenditure_kcal"])
             if "deficit_kcal" in kv:
                 record.deficit_kcal = _to_float(kv["deficit_kcal"])
@@ -144,15 +156,34 @@ def parse_file(path: Path) -> list:
 
     先尝试按文件内的 "# YYYY-MM-DD" 标题切分（模式 B）；
     若无任何标题，则回退到用文件名中的日期（模式 A）。
+
+    身份标签（label）的取值规则 —— 看的是**文件名**，不是内部结构：
+
+        文件名就是日期（log/2026-10-12.md）—— 这是一天一文件的布局，
+            标签取**目录名**（log / people/alice …）
+        文件名不是日期（examples/fixtures/CN-01.md）—— 这是一档案多天的布局，
+            标签取**文件名**（persona 名）
+
+    为什么要这样分：一天一文件时，文件名就是日期。若拿它当标签，一周 7 个文件会被
+    算成 7 个"档案"，周汇总输出 "7 天 / 7 个档案" —— 明明是 1 个人。目录才是身份的
+    载体。反过来，多天档案的文件名是人名，才是真正的身份。
     """
     try:
         text = path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         return []
 
+    is_day_file = DATE_PATTERN.search(path.stem) is not None
+    if is_day_file:
+        try:
+            label = path.parent.resolve().name or path.stem
+        except OSError:
+            label = path.parent.name or path.stem
+    else:
+        label = path.stem
+
     lines = text.splitlines()
     records = []
-    label = path.stem
 
     current_day = None
     buffer = []
@@ -171,7 +202,7 @@ def parse_file(path: Path) -> list:
     if current_day is not None:
         records.append(parse_text_block(buffer, current_day, label))
     elif buffer:
-        # 模式 A：日期在文件名里
+        # 没有任何日期标题：回退到用文件名里的日期
         match = DATE_PATTERN.search(path.stem)
         if match:
             y, m, d = (int(g) for g in match.groups())

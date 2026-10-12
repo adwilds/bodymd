@@ -105,7 +105,7 @@
 |---|---|---|
 | FR-1.1 | `profile.md` 为 YAML 格式，含基线、目标、训练配置 | 字段与 `templates/profile.md` 完全一致 |
 | FR-1.2 | `log/YYYY-MM-DD.md` 为追加式，一行一条 | 解析器可无歧义提取每条记录 |
-| FR-1.3 | 每条营养数据必须带 `source` 字段 | 取值属于 {photo, voice, manual, wearable, video+voice, estimated} |
+| FR-1.3 | 每条**餐食**记录必须带 `source` 字段 | 取值属于 {photo, voice, manual, wearable, video+voice, estimated}；训练 / `## Body` / `## Sleep` 各有独立取值集合，见 `SKILL.md` §3.4 |
 | FR-1.4 | 被人工修改的估算必须记录 `edited` | `edited: none` 或 `edited: <说明>` |
 | FR-1.5 | 全部文件为纯文本 Markdown | 任意文本编辑器可读写；无专有格式 |
 | FR-1.6 | 提供 `.gitignore`，默认排除个人数据 | `profile.md` / `log/` / `reports/` / `photos/` 均被忽略 |

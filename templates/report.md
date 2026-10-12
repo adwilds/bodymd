@@ -7,7 +7,7 @@ Deficit       480 kcal        target <=600      ok
 Protein       148 / 145 g                       +3 g
 Sleep         7h 20m
 Training      deadlift 3x12 @60 kg              done
-Next session  deadlift @62.5 kg
+Next session  deadlift @65 kg
 
 What changed
 - none: first day inside all three targets
@@ -44,6 +44,10 @@ Notes
 3. No colour coding by medical threshold.
 4. No motivational language.
 5. Estimates stay labelled as estimates.
+6. `Next session` is arithmetic, not a guess — it comes from `SKILL.md` §5.2
+   (**+2.5 kg upper body, +5 kg lower body** when every prescribed rep was completed at target
+   RPE). Deadlift is lower body, so 60 kg → 65 kg. The same log must give the same answer in any
+   tool.
 
 ---
 

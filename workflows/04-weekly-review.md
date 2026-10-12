@@ -47,15 +47,15 @@ if training sessions < 2 of planned 3.5                              ->  do not 
 ## Output format
 
 ```
-Week 41 review  (12 Oct - 18 Oct)
+Week 41 review  (5 Oct - 11 Oct)
 
 Average deficit      512 kcal / day
-Weight trend         74.6 kg   (-0.4 kg vs last week)
+Weight trend         75.2 kg   (-0.4 kg vs last week)
 Protein adherence    5 of 7 days
 Training             3 of 3 sessions
 
 Assessment
-- on track: -0.4 kg/week is inside the 0.3-0.6 target band
+- on track: -0.4 kg/week is 0.5% of bodyweight, inside the 0.3-0.7% target band
 
 Proposed change
 - none. Hold current targets for one more week.
@@ -64,6 +64,9 @@ Open question
 - protein missed on Tue and Fri. Same days you had late meetings.
   Want to move the protein target earlier in the day?
 ```
+
+The week number is the **ISO week** (`YYYY-WW`), and it is stated with its date range so there is
+no ambiguity about which seven days were reviewed.
 
 ---
 

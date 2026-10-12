@@ -105,13 +105,19 @@
 
 ## 7. 我写过的记录被改了
 
-日志是 **append-only（只追加）**（`SKILL.md` §3.4）。修改 = **新增一行** `edited:`，**绝不是**静默覆盖旧值 —— 你需要能看到"这个数字变了、为什么变"。
+日志是 **append-only（只追加）**（`SKILL.md` §3.4）—— 它的意思是**不许有静默的改动**，不是「每次改动都要新开一行」。修正的做法是**改那一行自己的 `edited:` 字段**，让这一行自己记录「改了什么、为什么改」：
+
+```markdown
+- 13:05 | lunch | 鸡胸 150g + 米饭 + 西兰花 | 570 kcal | P54 C55 F15 | photo: photos/2026-10-12/1305.jpg | source: photo | edited: 米饭 150g->120g
+```
+
+**不要把同一顿饭再追加一遍。** 那会让 `## Totals` 重复计算 —— **一顿被算两次的饭，比一顿算错的饭更糟。**
 
 补救：
 
 1. 如果目录在 git 里：`git diff` 看改了什么，`git checkout` 撤销。
 2. 没有 git：上一版的数字通常还在你的对话记录里 —— 抄回来，补上 `edited:` 行。
-3. 然后告诉 AI：*日志是只追加的，不许改写已有行。*
+3. 然后告诉 AI：*日志里不许有静默改动 —— 只要改了数字，`edited:` 就必须说明改了什么。*
 
 这也是**建议用 git 私下备份这个目录**的理由。8 个测试档案里有 2 个就是专门用来测这类脏数据的。
 
@@ -130,8 +136,8 @@ python3 scripts/validate_log.py log/
 | 码 | 级别 | 含义 | 怎么改 |
 |---|---|---|---|
 | V1 | FATAL | 餐食行字段数 < 6 | 对照 `SKILL.md` §3.3 检查行结构 |
-| V2 | FATAL | 缺 `source:` | 每条营养记录都必须标注来源 |
-| V3 | FATAL | `source:` 取值非法 | 合法值：`photo`、`voice`、`manual`、`wearable`、`video+voice`、`estimated` |
+| V2 | FATAL | 餐食行缺 `source:` | 每条营养记录都必须标注来源 |
+| V3 | FATAL | `source:` 取值非法 | 餐食行只接受 `photo`、`voice`、`manual`、`wearable`、`video+voice`、`estimated`。**训练行、`## Body`、`## Sleep` 用的是各自不同的取值集合** —— 完整表格见 `SKILL.md` §3.4 |
 | V4 | WARN | 缺 `edited:` | 没改过就写 `edited: none` |
 | V5 | FATAL | 既没有热量数字，也没有显式 `unknown` | 给数字，或给字面量 `unknown` |
 | V6 | FATAL | 训练行缺 `exercise:` 或 `reps:` | 两个都是必填 |
@@ -143,7 +149,7 @@ python3 scripts/validate_log.py log/
 健康仓库的预期输出：
 
 ```bash
-python3 scripts/selftest.py                          # 13 项 → 13/13 PASS
+python3 scripts/selftest.py                          # 18 项 → 18/18 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → 致命 0，警告 2（两条都是故意的）
 python3 scripts/parse_log.py    examples/fixtures/   # → 56 天 / 8 个档案
 ```

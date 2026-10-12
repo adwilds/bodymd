@@ -58,7 +58,7 @@
 
 ```yaml
 # 3.3 Daily log schema — added in v1.1
-- 08:20 | breakfast | 520 kcal | P42 C48 F16 | source: photo | edited: none | note: hotel buffet
+- 08:20 | breakfast | 酒店自助：炒蛋 2 个 + 培根 3 片 + 吐司 1 片 | 520 kcal | P42 C48 F16 | photo: photos/2026-10-12/0820.jpg | source: photo | edited: none | note: hotel buffet
 ```
 
 **规则**：新字段一律**追加到行尾**，不得插在中间。这样旧解析器遇到多余字段时可直接忽略。
@@ -146,14 +146,20 @@ python3 scripts/validate_log.py examples/fixtures/
 """
 
 VALID_SOURCES = {"photo", "voice", "manual", "wearable", "video+voice", "estimated"}
-"""合法数据来源。契约要求：每条营养记录必须来自其中之一。"""
+"""合法的餐食来源。
+
+契约要求：每条营养记录必须来自其中之一。
+注意这个集合**只管餐食行** —— 训练行、## Body、## Sleep 各有独立取值集合
+（见 SKILL.md §3.4）。把它们混成一个集合是真实踩过的坑：
+文档只公布了 6 个值，仓库里实际用了 15 个。
+"""
 
 
 def parse_meal_line(line: str) -> dict:
     """解析一行餐食记录。
 
     输入形如：
-        08:20 | breakfast | 520 kcal | P42 C48 F16 | source: photo | edited: none
+        08:20 | breakfast | 燕麦 60g + 鸡蛋 3 个 | 520 kcal | P42 C48 F16 | photo: p.jpg | source: photo | edited: none
 
     返回：
         {"time": "08:20", "meal": "breakfast", "kcal": 520,
