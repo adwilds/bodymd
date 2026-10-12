@@ -1,0 +1,87 @@
+name: Bug report
+description: The contract, a workflow, a prompt or a script does not behave the way the docs say it does
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before filing:** [`docs/troubleshooting.md`](https://github.com/adwilds/bodymd/blob/main/docs/troubleshooting.md)
+        covers the ten failures I have already seen, with fixes. Most reports end there.
+
+        This project is a data contract plus four workflows — not an app. Feature requests for an
+        app, a mobile UI, sync, or video-based load detection will be closed (`SKILL.md` §5.1, §9).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What is broken?
+      description: Pick the one closest to the problem.
+      options:
+        - The data contract (SKILL.md §3)
+        - A workflow (workflows/)
+        - A prompt (prompts/)
+        - A script (scripts/)
+        - A fixture (examples/fixtures/)
+        - The documentation is wrong or unclear
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: tool
+    attributes:
+      label: Tool and model
+      description: This is the first thing I will ask — behaviour differs a lot between models.
+      placeholder: e.g. "Claude Code, Sonnet 4.5" or "Kimi, upload mode" or "ChatGPT, free tier"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: Quote the line from SKILL.md or the docs that says so, if you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: The exact output or behaviour. Not a summary — the real thing, as it came out.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce it
+      description: The command you ran, or the exact words you sent the model.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: log
+    attributes:
+      label: The relevant log day (personal details removed)
+      description: |
+        Numbers are safe to share. Identity is not. Replace anything personal with `REDACTED`.
+        If a script failed, paste the complete command and its complete output.
+      render: markdown
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmed
+    attributes:
+      label: Before submitting
+      options:
+        - label: I read docs/troubleshooting.md and it did not cover this
+          required: true
+        - label: I removed anything personal (name, address, account, photos) from what I pasted
+          required: true
+        - label: This is not a request to turn the project into an app
+          required: true

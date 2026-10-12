@@ -1,10 +1,15 @@
 # Never commit personal data to a public repository.
-
+#
+# Note: a bare pattern like `profile.md` matches at ANY depth, so the blank
+# template under templates/ must be re-included by name, after the rule above
+# it. Order matters in .gitignore — the last matching pattern wins.
 profile.md
 log/
 reports/
 photos/
 
-# Keep the templates and the structure, not the contents.
+# The blank templates and the fabricated fixtures are part of the repo.
+# Your filled-in data is not.
 !templates/
+!templates/profile.md
 !examples/

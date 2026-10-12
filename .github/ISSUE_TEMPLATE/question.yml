@@ -1,0 +1,41 @@
+name: Question
+description: Ask about the workflow, the contract, or how it fits your situation
+title: "[question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Two faster places first:**
+        [`docs/troubleshooting.md`](https://github.com/adwilds/bodymd/blob/main/docs/troubleshooting.md)
+        and [`docs/faq.md`](https://github.com/adwilds/bodymd/blob/main/docs/faq.md) — between them
+        they answer most of what gets asked here.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Ask it plainly. One question per issue works best.
+    validations:
+      required: true
+
+  - type: textarea
+    id: situation
+    attributes:
+      label: Your situation, in a few lines
+      description: |
+        Useful context: what you are doing (cutting / bulking / maintenance), whether you train
+        already, and which AI tool you have access to. **Do not include personal or medical
+        details** — the workflow does not need them, and a public issue is not the place for them.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmed
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the troubleshooting doc and the FAQ
+          required: true
+        - label: I am not asking for medical or dietary advice — I know this is a logging workflow, not a coach
+          required: true

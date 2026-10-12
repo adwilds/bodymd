@@ -10,6 +10,20 @@
 
 ---
 
+## Start here
+
+| | |
+|---|---|
+| **What it is** | A food-and-training log that lives in **your own Markdown files**, plus four workflows any AI can follow. Two minutes a day. |
+| **What it is not** | An app. No account, no server, no database, no subscription, no telemetry. |
+| **Who it is for** | Someone cutting fat who already trains, wants the record to outlive switching AI tools, and will spend two minutes a day on it. |
+| **What you need** | Any AI you can paste text into. A free tier is enough. Python 3 is optional, for the validator only. |
+| **Why it exists** | The app you use now can paywall its scanner, raise the price, or get acquired. Then your 200 logged meals are not something you can carry out the door. Here, the log is a folder you own. |
+
+**→ [Quick start](#quick-start)** ・ **[What a day looks like](#how-it-works)** ・ **[Something is broken](#something-is-broken)** ・ **[FAQ](docs/faq.md)**
+
+---
+
 ## The thing that bothered me
 
 A calorie app has two jobs: hold your food log, and think about it.
@@ -84,39 +98,84 @@ any of this outlives the next model release.
 | `prompts/` | Standalone prompt files, one per step |
 | `templates/` | The file formats your data lives in |
 | `docs/run-with-any-model.md` | ⭐ Setup for each tool — Claude Code, Codex, Cursor, ChatGPT, Kimi, 豆包 |
-| `docs/` | Why local data, BYOK setup, dev guide, user guide, testing plan, FAQ |
+| `docs/troubleshooting.md` | ⭐ **When something breaks.** The ten failures I have seen, with fixes, plus the validator's error codes |
+| `docs/` | Why local data, BYOK setup, user guide, dev guide, testing plan, FAQ |
 | `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (13 checks, stdlib only) |
 | `scripts/` | Reference implementation: contract validator + weekly aggregator |
 | `examples/sample-week.md` | One worked week, with what each lesson changed in this repo |
 | `examples/fixtures/` | 8 fabricated test users × 7 days |
 | `README.zh.md` | The Chinese front page — `吃练记 · 薄肌手册`, written natively, not translated |
-| `docs/zh-CN/` | Chinese versions of the guides |
+| `docs/zh-CN/` | Chinese versions of the guides, including its own troubleshooting page |
 
-## Install
+### What your folder looks like
 
-### If you use a coding agent — Claude Code, Codex CLI, Cursor, Copilot, Gemini CLI
+The repo is the instructions. Your data lives beside them — this is the whole data model:
+
+```
+your-folder/
+├── profile.md               ← fill in once: height, weight, targets, program
+├── log/
+│   └── 2026-10-12.md        ← one file per day, append-only
+├── reports/                 ← generated reports
+└── photos/                  ← your meal and training photos
+```
+
+Only the first two are required. `profile.md`, `log/`, `reports/` and `photos/` are excluded by
+`.gitignore` on purpose — **never commit them to a public repo.**
+
+## Quick start
+
+Nothing to install. Pick the row that matches you:
+
+| Your situation | Go to |
+|---|---|
+| I use a coding agent | [Path A](#path-a--a-coding-agent) |
+| I use a chat window — ChatGPT, Kimi, 豆包, Gemini | [Path B](#path-b--a-plain-chat-window) |
+| I only want to see whether any of this holds up | [Path C](#path-c--just-run-the-tests) |
+
+**What you get in the first five minutes:** a `profile.md` with your targets and today's log open
+in front of you. You do not need to finish a day to know whether the idea works — one corrected
+meal line is enough to see it.
+
+### Path A — a coding agent
+
+Claude Code, Codex CLI, Cursor, Copilot, Gemini CLI.
 
 ```bash
 git clone https://github.com/adwilds/bodymd && cd bodymd
-cp templates/profile.md profile.md     # fill in your baseline once
+cp templates/profile.md profile.md     # then open it and put in your real numbers
 ```
 
-Then, in the agent:
+Then:
 
-> Read SKILL.md. Start today's log.
+1. Open the agent **at this folder** — not a parent folder, this one.
+2. Say: `Read SKILL.md. Start today's log.`
+3. Fill in `profile.md`. It asks for height, weight, protein target, deficit target, training days.
+   **`unknown` is a legal answer** for anything you don't know — a guess is not.
+4. Log one meal: photograph the plate, hand it over, and look at the line it writes.
+5. Correct one number by hand, and watch the `edited:` field appear.
+
+If step 4 produced something that looks like the block in [How it works](#how-it-works), it is
+working. If not, [`docs/troubleshooting.md`](docs/troubleshooting.md) starts with exactly this case.
 
 `AGENTS.md` carries the rules for tools that read it automatically; `.cursor/rules/` and
 `.github/copilot-instructions.md` do the same job for Cursor and Copilot. That is the whole
 install.
 
-### If you use ChatGPT, Kimi, 豆包 — or any plain chat window
+### Path B — a plain chat window
 
-There is nothing to install. Paste or upload `SKILL.md` with your `profile.md`, ask for today's
-log, and paste the updated file back at the end of the session. **This is not a downgrade** —
-it is the same contract, and it is a supported way to use this. Per-tool notes:
-[`docs/run-with-any-model.md`](docs/run-with-any-model.md).
+ChatGPT, Kimi, 豆包, Gemini, 通义, DeepSeek — anything you can paste text into.
 
-### If you just want to see whether any of this holds up
+1. Open a new chat.
+2. Paste `SKILL.md`, then your `profile.md`. Ask for today's log.
+3. Talk to it the way you normally would: *"米饭两碗"*, *"今天没练"*, *"昨晚睡 6 小时"*.
+4. At the end of the session, copy the updated log block back into `log/YYYY-MM-DD.md`.
+
+**This is not a downgrade** — it is the same contract, and it is a supported way to use this.
+The one thing to remember: a new chat remembers nothing, so steps 1-2 repeat every time. Per-tool
+notes: [`docs/run-with-any-model.md`](docs/run-with-any-model.md).
+
+### Path C — just run the tests
 
 ```bash
 python3 scripts/selftest.py                          # 13 checks → expect 13/13 PASS
@@ -125,9 +184,10 @@ python3 scripts/parse_log.py    examples/fixtures/   # → expect 56 days / 8 pe
 ```
 
 The third command reads eight test users — Chinese, Chinese-American, British, Mexican,
-Nigerian, South Asian — one week each. **They are fabricated, and they are supposed to be messy:**
-a skipped lunch, a scale with dead batteries, a 48 g protein day, a day with no training
-logged at all. Disclosure and red lines: [`examples/fixtures/README.md`](examples/fixtures/README.md).
+Nigerian, South Asian, and two more — one week each. **They are fabricated, and they are supposed
+to be messy:** a skipped lunch, a scale with dead batteries, a 48 g protein day, a day with no
+training logged at all. Disclosure and red lines:
+[`examples/fixtures/README.md`](examples/fixtures/README.md).
 
 The **2 warnings are deliberate.** They exist to prove the validator drops a missing optional
 field to a warning instead of rejecting the file. Incomplete records are the normal case — a
@@ -182,13 +242,34 @@ going without me.
 If they would not, the right conclusion is that this is a good personal tool rather than a
 product — and that is a fine thing for it to be.
 
+## Something is broken
+
+Four places to look, in this order:
+
+| | |
+|---|---|
+| **The AI is misbehaving** — invents its own format, asks for things you already gave it, adds advice you did not ask for | [`docs/troubleshooting.md`](docs/troubleshooting.md) — the ten failures I have actually hit, with fixes |
+| **A script failed** | Same file, [§8](docs/troubleshooting.md#8-the-validator-says-fatal-or-warn). Every validator code (V1-V9) is mapped to its fix. ⚠️ The validator's console messages are currently in Chinese — that table is the translation |
+| **"Should I use this for X?"** | [`docs/faq.md`](docs/faq.md) |
+| **None of the above** | [Open an issue](https://github.com/adwilds/bodymd/issues/new/choose) — one template for bugs, one for questions |
+
+When you report something, include:
+
+1. **Which tool and model.** Behaviour differs a lot between models, and it is the first thing I will ask.
+2. **The exact output**, not a summary of it.
+3. The relevant `log/` day with anything personal removed. **Numbers are safe to share; identity is not.**
+4. If a script failed: the full command and its complete output.
+
+This is a side project, so issues get answered in batches. A report I can reproduce gets fixed
+far faster than one I have to guess at.
+
 ## Contributing
 
-Issues and workflow improvements are welcome, especially from people who actually ran the
-thing for a week and found where it breaks.
+Issues and workflow improvements are welcome — especially from people who ran it for a week and
+found where it breaks. That is the most useful thing anyone can send me.
 
-**Feature requests that begin "you should build an app" will be closed.** That is the one
-problem this project exists to not have.
+**Feature requests that begin "you should build an app" will be closed.** That is the one problem
+this project exists to not have.
 
 ## License
 

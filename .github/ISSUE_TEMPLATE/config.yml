@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Troubleshooting — the ten failures I have already seen
+    url: https://github.com/adwilds/bodymd/blob/main/docs/troubleshooting.md
+    about: The AI ignores the format, estimates look wrong, a script failed, the report is too long. Start here.
+  - name: FAQ
+    url: https://github.com/adwilds/bodymd/blob/main/docs/faq.md
+    about: Is this a calorie tracker, which model should I use, how accurate is it, is my data safe.
+  - name: Run it with any model
+    url: https://github.com/adwilds/bodymd/blob/main/docs/run-with-any-model.md
+    about: Per-tool setup for Claude Code, Codex, Cursor, ChatGPT, Kimi and 豆包.
+  - name: 中文说明
+    url: https://github.com/adwilds/bodymd/blob/main/README.zh.md
+    about: 吃练记 · 薄肌手册 — 中文首页与中文故障排查文档。
