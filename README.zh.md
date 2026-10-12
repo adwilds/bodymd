@@ -24,6 +24,8 @@
 
 **想先看看它长什么样？** [`docs/zh-CN/walkthrough.md`](docs/zh-CN/walkthrough.md) 是**一整天 + 周日复盘**的完整示例 —— 真实的文件、真实的对话、真实的脚本输出。
 
+**只想要一份照做的清单？** [`docs/zh-CN/user-guide.md`](docs/zh-CN/user-guide.md) —— 5 分钟上手、每天的四个动作、周日复盘，一页说完。
+
 ---
 
 ## 先说一件让我不爽的事
@@ -87,6 +89,7 @@
 | `templates/` | 你的数据长什么样 |
 | `docs/run-with-any-model.md` | ⭐ 各工具配置法（Claude Code / Codex / Cursor / ChatGPT / Kimi / 豆包） |
 | `docs/zh-CN/run-with-any-model.md` | ⭐ 上面那篇的**中文版** |
+| `docs/zh-CN/user-guide.md` | ⭐ **中文使用手册** —— 从 5 分钟上手到每天的四个动作。中文原生写的，不是英文页的翻译 |
 | `docs/zh-CN/troubleshooting.md` | ⭐ **出问题时看这个。** 我真实踩过的十个坑 + 校验器错误码对照表 |
 | `README.md` | 英文首页 —— `bodymd`，原生写的，不是从中文翻过去的 |
 | `docs/` | 为什么放本地、BYOK 配置、使用手册、开发手册、测试方案、FAQ、英文故障排查 |

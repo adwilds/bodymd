@@ -282,4 +282,4 @@
 - **合成测试数据**：`examples/fixtures/`（**SYNTHETIC — 不得用于宣称真实用户**）
 - **测试方案**：`docs/testing.md`
 - **开发手册**：`docs/dev-guide.md`
-- **使用手册**：`docs/user-guide.md`
+- **使用手册**：`docs/user-guide.md`（英文）／ `docs/zh-CN/user-guide.md`（中文，原生撰写）

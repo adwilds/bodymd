@@ -1,6 +1,6 @@
 # User Guide
 
-> **Note on language:** this guide is in English because it ships to users. A short Chinese summary for the maintainer is at the bottom.
+> **Note on language:** this guide ships in English. The Chinese version is [`docs/zh-CN/user-guide.md`](zh-CN/user-guide.md) — written for the Chinese market, not a translation of this page.
 
 ---
 
@@ -178,21 +178,3 @@ Just point the new tool at the same folder and say *"Read SKILL.md."* It picks u
 Personal use is free and always will be.
 
 Company internal deployment, delivery to a client, or bundling into a paid product requires a license. See `LICENSE.md`.
-
----
-
----
-
-## 中文摘要（维护者用，对外发布时可删除）
-
-**这是什么**：用你自己的 AI 跑的身体管理工作流。没有 App、没有账号、没有订阅。你的记录就是一个文件夹。
-
-**5 分钟上手**：克隆 → `cp templates/profile.md profile.md` → 填四个数（体重 / 蛋白目标 / 缺口目标 / 训练动作）→ 把 AI 工具指向这个文件夹 → 说"读 SKILL.md，今天开始"。
-
-**每天的四个动作**：拍餐（餐前+餐后，按顺序吃，先蛋白）→ 拍训练（视频只给动作和次数，**重量必须口述**）→ 看缺口（消耗 − 摄入 ≤600 kcal）→ 读日报（一屏，一条行动）。
-
-**每周日做周复盘**：算三个聚合（平均缺口 / 7 天体重趋势 / 蛋白达标天数），系统最多改一个变量；**执行率不足时不准改计划**。
-
-**换模型**：把新工具指向同一个文件夹即可，数据不用迁移——这就是这个项目的全部意义。
-
-**数据在哪**：`profile.md` + `log/` + `reports/` + `photos/`。**永远不要把 `log/` 或 `profile.md` 提交到公开仓库。**

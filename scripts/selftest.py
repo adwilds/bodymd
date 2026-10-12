@@ -66,6 +66,7 @@ REQUIRED_FILES = [
     "docs/testing.md", "docs/dev-guide.md", "docs/user-guide.md",
     "docs/troubleshooting.md", "docs/zh-CN/troubleshooting.md",
     "docs/run-with-any-model.md", "docs/zh-CN/run-with-any-model.md",
+    "docs/zh-CN/user-guide.md",
     "docs/byok-setup.md", "docs/faq.md", "docs/why-local-data.md",
     "scripts/validate_log.py", "scripts/parse_log.py", "scripts/selftest.py",
     "examples/walkthrough.md", "docs/zh-CN/walkthrough.md",
@@ -84,6 +85,7 @@ SAMPLE_SOURCE_DOCS = [
     "examples/walkthrough.md", "docs/zh-CN/walkthrough.md",
     "docs/troubleshooting.md", "docs/zh-CN/troubleshooting.md",
     "docs/user-guide.md", "docs/dev-guide.md",
+    "docs/zh-CN/user-guide.md",
 ]
 
 PERSONA_IDS = ["CN-01", "CN-02", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
