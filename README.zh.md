@@ -164,10 +164,10 @@ cp templates/profile.md profile.md     # 打开它，填你自己的数字
 ```bash
 python3 scripts/selftest.py                          # 20 项检查 → 预期 20/20 通过
 python3 scripts/validate_log.py examples/fixtures/   # → 预期 0 致命，2 警告
-python3 scripts/parse_log.py    examples/fixtures/   # → 预期 63 天 / 8 个档案
+python3 scripts/parse_log.py    examples/fixtures/   # → 预期 68 天 / 9 个档案
 ```
 
-第三条命令读的是 8 个测试用户 —— 中国人、华裔美国人、英国人、墨西哥人、尼日利亚人、南亚裔 —— 每人一周。**全部是虚构的，而且是故意做得乱七八糟的**：漏记的午餐、没电的体重秤、蛋白只有 48 g 的一天、完全没记训练的一天。披露与红线见 [`examples/fixtures/README.md`](examples/fixtures/README.md)。
+第三条命令读的是 9 个测试用户 —— 中国人、华裔美国人、英国人、墨西哥人、尼日利亚人、南亚裔、德国人 —— 每人一周，**其中一人只记了 5 天**。**全部是虚构的，而且是故意做得乱七八糟的**：漏记的午餐、没电的体重秤、蛋白只有 48 g 的一天、完全没记训练的一天，以及一周里直接缺了两天的记录。披露与红线见 [`examples/fixtures/README.md`](examples/fixtures/README.md)。
 
 那 **2 条警告是故意的**。它们用来证明：校验器遇到缺一个非必填字段时，会降级成警告，而不是把文件打回去。**记录不完整才是常态，一个会因此拒收文件的校验器，只是摆设。**
 
@@ -177,7 +177,7 @@ python3 scripts/parse_log.py    examples/fixtures/   # → 预期 63 天 / 8 个
 
 - **各工具的适配文件结构是对的，但我没有真机跑过每一家的当前版本。** 文件都在、都能解析，但没有逐个验证过对接各家加载器的完整链路。**兼容矩阵要读成「已经接好了」，不是「已经验证过」** —— 诚实声明写在 [`docs/zh-CN/run-with-any-model.md`](docs/zh-CN/run-with-any-model.md) 第七节。
 - **契约还是第 0 版。** 字段名可能还会改，改的时候我会在 commit 里写明。
-- **那 8 个档案是「像不像」用的，不是基准值。** 别把里面的数字抄进你的 `profile.md` 当成建议。
+- **那 9 个档案是「像不像」用的，不是基准值。** 别把里面的数字抄进你的 `profile.md` 当成建议。
 - **目前没有人为它付过钱 —— 这也不是现阶段的目标。**
 
 ## 这不是什么

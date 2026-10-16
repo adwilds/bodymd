@@ -39,7 +39,7 @@ workflows, the data contract, and the rules.
 | `scripts/` | Contract validator, weekly aggregator, self-test |
 | `docs/` | `run-with-any-model.md`, testing, dev guide, user guide, BYOK, FAQ |
 | `docs/zh-CN/` | Chinese versions |
-| `examples/` | One worked week + 8 synthetic users × 7 days |
+| `examples/` | One worked week + 9 synthetic users (eight full weeks, one partial) |
 
 ---
 

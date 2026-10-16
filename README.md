@@ -107,7 +107,7 @@ any of this outlives the next model release.
 | `scripts/` | Reference implementation: contract validator + weekly aggregator |
 | `examples/walkthrough.md` | ⭐ **A complete run, start to finish** — one day plus the weekly review, with the real files and the real script output |
 | `examples/sample-week.md` | One worked week, with what each lesson changed in this repo |
-| `examples/fixtures/` | 8 fabricated test users × 7 days |
+| `examples/fixtures/` | 9 fabricated test users — eight full weeks plus one partial week |
 | `README.zh.md` | The Chinese front page — `吃练记 · 薄肌手册`, written natively, not translated |
 | `docs/zh-CN/` | Chinese versions of the guides, including its own troubleshooting page |
 
@@ -184,13 +184,14 @@ notes: [`docs/run-with-any-model.md`](docs/run-with-any-model.md).
 ```bash
 python3 scripts/selftest.py                          # 20 checks → expect 20/20 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # → expect 63 days / 8 personas
+python3 scripts/parse_log.py    examples/fixtures/   # → expect 68 days / 9 personas
 ```
 
-The third command reads eight test users — Chinese, Chinese-American, British, Mexican,
-Nigerian, South Asian, and two more — one week each. **They are fabricated, and they are supposed
-to be messy:** a skipped lunch, a scale with dead batteries, a 48 g protein day, a day with no
-training logged at all. Disclosure and red lines:
+The third command reads nine test users — Chinese, Chinese-American, British, Mexican,
+Nigerian, South Asian, German, and two more — one week each, except one who logged **five days of
+seven**. **They are fabricated, and they are supposed to be messy:** a skipped lunch, a scale with
+dead batteries, a 48 g protein day, a day with no training logged at all, and a week where two
+days are missing outright. Disclosure and red lines:
 [`examples/fixtures/README.md`](examples/fixtures/README.md).
 
 The **2 warnings are deliberate.** They exist to prove the validator drops a missing optional

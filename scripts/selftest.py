@@ -31,9 +31,10 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "examples" / "fixtures"
 
 # 期望值 —— 全部来自 docs/testing.md 与 examples/fixtures/personas.md 的公开承诺。
-EXPECTED_PERSONAS = 8
-# CN-01 是两周（09-07..09-13 + 09-14..09-20），其余 7 人是 09-14..09-20 一周
-EXPECTED_DAYS = 63
+EXPECTED_PERSONAS = 9
+# CN-01 是两周（09-07..09-13 + 09-14..09-20）；DE-01 只记了 5 天（09-14..09-18）；
+# 其余 7 人是 09-14..09-20 一周。8×7 + 7 + 5 = 68
+EXPECTED_DAYS = 68
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -90,7 +91,7 @@ SAMPLE_SOURCE_DOCS = [
     "examples/fixtures/CYCLE.md",
 ]
 
-PERSONA_IDS = ["CN-01", "CN-02", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
+PERSONA_IDS = ["CN-01", "CN-02", "DE-01", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
 
 
 class Report:
@@ -271,7 +272,7 @@ def main(argv: list) -> int:
     unmarked = [pid for pid in PERSONA_IDS
                 if not (FIXTURES / f"{pid}.md").read_text(encoding="utf-8")
                 .lstrip().startswith("# SYNTHETIC")]
-    rep.check("T4 8 个合成档案均带 SYNTHETIC 标记", not unmarked, f"未标记：{unmarked}")
+    rep.check(f"T4 {EXPECTED_PERSONAS} 个合成档案均带 SYNTHETIC 标记", not unmarked, f"未标记：{unmarked}")
 
     # --- 加载被测模块 ------------------------------------------------------
     validate_log = load_module(ROOT / "scripts" / "validate_log.py", "validate_log")
@@ -593,7 +594,7 @@ def main(argv: list) -> int:
     distinct_targets = len({v for v in targets19.values() if v}) >= 6
 
     ok19 = (not mismatch19
-            and len(expected19) == 9
+            and len(expected19) == 10
             and at_boundary
             and below_boundary
             and distinct_targets)

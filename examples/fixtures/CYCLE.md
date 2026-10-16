@@ -48,7 +48,7 @@ but they must be *internally consistent* imperfections.
 ```bash
 python3 scripts/selftest.py                          # expect 20/20 PASS
 python3 scripts/validate_log.py examples/fixtures/   # expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # expect 63+ days / 8+ personas
+python3 scripts/parse_log.py    examples/fixtures/   # expect 68 days / 9 personas
 ```
 
 Plus: every relative Markdown link resolves.
@@ -89,7 +89,7 @@ Ordered by value. Strike through an entry when closed, and note the commit.
 
 | # | Gap | What it would prove |
 |---|---|---|
-| G1 | **A partial week** — a persona who logged 5 of 7 days | The adherence denominator. "0/5" and "0/7" are different claims, and a naive implementation reports the same number for both |
+| ~~G1~~ | ~~**A partial week** — a persona who logged 5 of 7 days~~ → **CLOSED** by `DE-01` (`09-14 → 09-18`, five of seven days): the weekly row prints `5` days / `1/5 @155 g`, and T19's independent recomputation rejects a hardcoded `/7`. Commit: *"Close G1 — a partial week, so the adherence denominator cannot be 7"* | The adherence denominator. "0/5" and "0/7" are different claims, and a naive implementation reports the same number for both |
 | G2 | **Weight missing for 4+ consecutive days** | That the trend degrades to `——` instead of averaging two stray weigh-ins into a confident conclusion |
 | G3 | **A genuine plateau** — two consecutive weeks with the same mean | The `flat for 2 consecutive weeks → increase deficit by 150 kcal` rule. Currently unreachable: no persona has two weeks *and* flat weight |
 | G4 | **A persona gaining weight** | That the "falling faster than 0.75%" branch does not fire on the wrong sign |

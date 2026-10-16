@@ -136,7 +136,7 @@ Recovery:
 3. Then tell the AI: *"Nothing in the log changes silently. If you change a number, `edited:` must
    say what changed."*
 
-This is also the argument for backing the folder up with git, even privately. Two of the eight
+This is also the argument for backing the folder up with git, even privately. Two of the nine
 fixture personas exist precisely to test this class of mess.
 
 ---
@@ -173,7 +173,7 @@ Expected output on a healthy repo:
 ```bash
 python3 scripts/selftest.py                          # 20 checks → 20/20 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → 0 fatal, 2 warnings (both intended)
-python3 scripts/parse_log.py    examples/fixtures/   # → 63 days / 8 personas
+python3 scripts/parse_log.py    examples/fixtures/   # → 68 days / 9 personas
 ```
 
 The **2 warnings are deliberate**: they prove the validator downgrades a missing optional field

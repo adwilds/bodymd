@@ -8,7 +8,7 @@ Every persona file carries a `SYNTHETIC` marker on its first line, per the proje
 synthetic-data rule. To confirm the whole set is marked:
 
 ```bash
-grep -L "^# SYNTHETIC" examples/fixtures/{CN,US,UK,MX,NG,IN}-*.md    # expect: no output
+grep -L "^# SYNTHETIC" examples/fixtures/{CN,DE,US,UK,MX,NG,IN}-*.md    # expect: no output
 ```
 
 ---
@@ -22,7 +22,7 @@ Without realistic fixtures, every test passes for the wrong reason: an AI looks 
 tidy data and fails on the data people actually produce — a skipped lunch, a scale that is
 out of batteries, a 4-hour night before a heavy session, a weekend of drinking.
 
-So these eight personas are deliberately **broken in believable ways**.
+So these nine personas are deliberately **broken in believable ways**.
 
 ---
 
@@ -32,6 +32,7 @@ So these eight personas are deliberately **broken in believable ways**.
 |---|---|---|---|
 | `CN-01` 李明 | Shanghai, CN | Home cooking + canteen + late-night takeout | Eating-order failure repeated; one 4h-sleep night |
 | `CN-02` 王婷 | Chengdu, CN | Sichuan, high oil | Manual correction of a staple portion; weight not logged for days |
+| `DE-01` Jonas Brandt | Berlin, DE | German: bread, sausage, Kantine, Döner | **A partial week — only 5 of 7 days logged**; the adherence denominator |
 | `US-01` Michael Chen | San Francisco, US | Chinese-American takeout | Skipped meal logged as `unknown`; restaurant weekend overshoot |
 | `US-02` Sarah Williams | Austin, US | Mexican-American | Alcohol in the log; hidden calories in chips/queso |
 | `UK-01` James O'Brien | Manchester, UK | Pub food, ale, Sunday roast | Liquid calories counted; largest single-meal outlier |
@@ -39,9 +40,11 @@ So these eight personas are deliberately **broken in believable ways**.
 | `NG-01` Adaeze Okonkwo | Lagos, NG + London, UK | West African stews, travel week | A full day with **no training section at all**; jet lag |
 | `IN-01` Priya Sharma | London, UK | South Asian vegetarian | Structurally hard protein; iterates toward soya chunks |
 
-**Layout:** each file is one persona, seven days, one `# YYYY-MM-DD` heading per day. That is
-layout **B** in `scripts/parse_log.py`. The test week is the same for everyone:
-**2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable.
+**Layout:** each file is one persona, one `# YYYY-MM-DD` heading per logged day — seven headings
+for eight of the nine, and **five for `DE-01`**, whose weekend was never logged. That is layout
+**B** in `scripts/parse_log.py`. The number of headings *is* the number of recorded days: a day
+with no heading is **absent**, not zero, and must never be backfilled. The test week is the same
+for everyone: **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable.
 
 ---
 
@@ -81,7 +84,8 @@ requirement that day is exercising, so the fixture doubles as its own test asser
 # Layer L1 — contract validation. Expect: 0 fatal.
 python3 scripts/validate_log.py examples/fixtures/
 
-# Layer L2 — aggregation. Expect: 8 personas × 7 days + one extra week for CN-01 = 63 rows.
+# Layer L2 — aggregation. Expect: 9 personas / 68 rows
+#   8 personas x 7 days = 56  +  CN-01's extra week = 7  +  DE-01's partial week = 5  ->  68
 python3 scripts/parse_log.py examples/fixtures/
 ```
 

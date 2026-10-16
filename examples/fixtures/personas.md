@@ -1,9 +1,11 @@
-# personas.md — the eight fabricated users
+# personas.md — the nine fabricated users
 
-Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all eight, so weekly aggregates are
-directly comparable. **`CN-01` additionally carries `2026-09-07 .. 2026-09-13`** — a second,
-earlier week, because the weekly review recalculates from *this week vs last week* and a
-single-week fixture can never exercise that path. See the two-week table below.
+Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all nine, so weekly aggregates are
+directly comparable. Two of them deviate deliberately. **`CN-01` additionally carries
+`2026-09-07 .. 2026-09-13`** — a second, earlier week, because the weekly review recalculates from
+*this week vs last week* and a single-week fixture can never exercise that path (see the two-week
+table below). **`DE-01` carries only 5 of the 7 days** (`09-14 .. 09-18`) — the partial week, and
+the only fixture in which the adherence denominator can disagree with 7.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -16,6 +18,7 @@ These are the baselines the fixtures were written against. Read them before read
 |---|---|---|---|---|---|---|---|---|---|
 | `CN-01` | 李明 Li Ming | 32 / M | Shanghai | 178 cm | 82.4 → 81.6 kg | 150 g | Squat / deadlift / bench, 4–5×/wk | Mi Band | Photo + voice, logs everything |
 | `CN-02` | 王婷 Wang Ting | 29 / F | Chengdu | 163 cm | 64.8 → 64.4 kg | 105 g | Glute bridge / squat, 3×/wk | none | Photo, forgets the scale |
+| `DE-01` | Jonas Brandt | 34 / M | Berlin | 182 cm | 88.9 → 88.6 kg | 155 g | Push / pull / legs, 3×/wk | none (sleep from a watch) | Manual + photo, never logs at the weekend |
 | `US-01` | Michael Chen | 38 / M | San Francisco | 175 cm | 86.0 → 86.2 kg | 165 g | 5×5, 3–4×/wk | WHOOP | Photo, logs takeout as-is |
 | `US-02` | Sarah Williams | 34 / F | Austin, TX | 168 cm | 74.2 → 74.2 kg | 130 g | Upper/lower, 4×/wk | Apple Watch | Photo + manual, drinks on Fridays |
 | `UK-01` | James O'Brien | 41 / M | Manchester | 180 cm | 93.5 → 94.3 kg | 160 g | Squat / bench / deadlift, 3×/wk | Garmin | Manual, estimates loosely |
@@ -172,21 +175,54 @@ analysis from zero. A report that says "eat more protein" without noticing she d
 
 ---
 
+## 9. DE-01 · Jonas Brandt
+
+**Context.** 34, Berlin, works in construction project management. Bread, cheese and sausage at
+home, Kantine at lunch, and a Döner or a Currywurst when the day runs long. Trains push / pull /
+legs three times a week. Logs by hand in the evening — and does not log at the weekend.
+
+**Why he exists.** He is the **partial week** case, and the only persona whose week is not seven
+logged days: he recorded `09-14 → 09-18` and nothing at all for `09-19` / `09-20`. Two **absent**
+days are not two **zero** days, and the weekly row must say so — `5` days, `1/5 @155 g`.
+
+**Injected failures.** Two days with no `## Training` section (both genuine rest days, one of them
+an accidental 14-hour day); one 5.2-hour night; a day reconstructed in the evening from memory,
+with a `source: estimated` dinner; 0.5 l of beer entered by hand after the photo showed only the
+Döner; a Friday office cake that no photo would ever catch.
+
+**What a correct report must say.** The week is **5 days long, not 7**, and the two missing days
+are **the weekend** — the two days this pattern normally breaks on. So the report must say "1 of
+the 5 days recorded", and must not (a) print `1/7`, which invents two days nobody logged, or
+(b) call the week on track. The `598 kcal` average deficit is drawn from 5 days and is therefore
+optimistic in an unknown direction, because the days that went unlogged are the surplus days.
+Backfilling them would corrupt the same denominator the weekly review runs on.
+
+---
+
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **63 days / 8 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **68 days / 9 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
 |---|---|---|---|---|
 | `CN-01` | 14 | 446 / 449 kcal | 9 | Two ISO weeks; protein 69–129 g vs a 150 g target, **0/7 days hit**; 1 day on the `computed` path. See the two-week table below |
 | `CN-02` | 7 | 234 kcal | 3 | 3 days weight `unknown`; 1 manual correction; 1 `computed` day |
+| `DE-01` | 5 | 598 kcal | 3 | **A partial week: 5 of 7 days logged.** `09-19`/`09-20` absent (not zero); adherence reads `1/5`, not `1/7` |
 | `US-01` | 7 | 687 kcal | 4 | 1 meal logged as `unknown`; Saturday +3,510 kcal (−610) |
 | `US-02` | 7 | 442 kcal (6 days) | 4 | Alcohol + chips; Friday −390; Saturday has no Totals → `——` |
 | `UK-01` | 7 | 623 kcal | 3 | Weight rising 93.5 → 94.3 kg; Sunday roast 1,420 kcal |
 | `MX-01` | 7 | 373 kcal | 4 | Thursday 48 g protein; Saturday −780; 2 validator warnings |
 | `NG-01` | 7 | 419 kcal | 3 | **One day with no Training section at all** |
 | `IN-01` | 7 | 294 kcal | 3 | Protein rises 56 → 80 g across the week on her own initiative |
+
+**Note on `DE-01`:** it is the only **partial week** in the set — 5 recorded days inside a 7-day ISO
+week. Its weekly row prints `5` days and `1/5`, never `1/7`: the denominator is the days that were
+**recorded**, and the two absent days are counted in neither the numerator nor the denominator.
+An absent day is deliberately **not** the same thing as `weight_kg: unknown` (`CN-02`'s case) — an
+`unknown` is a recorded day with a missing number, an absent day is not a record at all. Before this
+fixture existed every persona-week in the set was exactly 7 days long, so `1/5` and `1/7` were
+indistinguishable and a hardcoded denominator would have passed every gate.
 
 **Note on `US-02`:** its average is over 6 days, not 7. Saturday has no `## Totals` section at
 all, so `expenditure_kcal` is `None` and the deficit is genuinely unknown. The parser prints
