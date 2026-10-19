@@ -24,7 +24,7 @@ This is the step that separates bodymd from a calorie diary. **The diary records
 | Aggregate | Formula | What it tells you |
 |---|---|---|
 | **Average deficit** | mean of daily deficit | whether the plan matches reality |
-| **Weight trend** | 7-day mean vs previous 7-day mean | the ground truth |
+| **Weight trend** | 7-day mean vs previous 7-day mean (needs a weight on >= 4 of the 7 days, else `——`) | the ground truth |
 | **Protein adherence** | days hitting >=90% of target, out of 7 | whether the intake side is actually being executed |
 
 **Use the 7-day mean, never a single day's weight.** Daily fluctuation is mostly water.
@@ -42,10 +42,16 @@ against the previous week. **Read that table rather than re-deriving it** — a 
 implementation of the same formula will disagree with the first one eventually, and then you
 will not know which number to trust.
 
-Two things the script deliberately refuses to do:
+Three things the script deliberately refuses to do:
 
 - **It will not invent a trend from one week.** A first week prints `——`. "Falling" and
   "flat for two weeks" are statements about two weeks; with one week of data they are unanswerable.
+- **It will not call two stray weigh-ins a "7-day mean".** If fewer than 4 of the week's days
+  carry a weight, the weight mean *and* the trend print `——`. Three or fewer readings is not a
+  sample: one is a Monday after a salty weekend, the other a Sunday morning before breakfast, and
+  their difference is water — but a review that prints `-0.33 kg` reads it as fat. The same rule
+  as everywhere else in this repo: `unknown` is a legal value, a confident number from bad coverage
+  is not.
 - **It will not guess a protein target.** The target comes from `profile.md`, or from the
   `--protein=` flag. If neither exists, the adherence column prints `——` instead of assuming
   a number — same rule as everywhere else in this repo: `unknown` is a legal value, a guess is not.

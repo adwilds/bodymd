@@ -41,10 +41,13 @@ So these nine personas are deliberately **broken in believable ways**.
 | `IN-01` Priya Sharma | London, UK | South Asian vegetarian | Structurally hard protein; iterates toward soya chunks |
 
 **Layout:** each file is one persona, one `# YYYY-MM-DD` heading per logged day — seven headings
-for eight of the nine, and **five for `DE-01`**, whose weekend was never logged. That is layout
+for six of the nine, **fourteen for `CN-01` and `CN-02`** (each carries a second ISO week), and
+**five for `DE-01`**, whose weekend was never logged. That is layout
 **B** in `scripts/parse_log.py`. The number of headings *is* the number of recorded days: a day
 with no heading is **absent**, not zero, and must never be backfilled. The test week is the same
-for everyone: **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable.
+for everyone: **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable;
+`CN-01` adds the week before it and `CN-02` the week after, for the two reasons `personas.md`
+records.
 
 ---
 
@@ -84,8 +87,9 @@ requirement that day is exercising, so the fixture doubles as its own test asser
 # Layer L1 — contract validation. Expect: 0 fatal.
 python3 scripts/validate_log.py examples/fixtures/
 
-# Layer L2 — aggregation. Expect: 9 personas / 68 rows
-#   8 personas x 7 days = 56  +  CN-01's extra week = 7  +  DE-01's partial week = 5  ->  68
+# Layer L2 — aggregation. Expect: 9 personas / 75 rows
+#   9 personas x 7 days = 63  +  CN-01's extra week = 7  +  CN-02's extra week = 7
+#   -  DE-01's two unlogged weekend days = 75
 python3 scripts/parse_log.py examples/fixtures/
 ```
 

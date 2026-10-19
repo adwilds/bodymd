@@ -24,7 +24,7 @@
 
 import sys
 import importlib.util
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -32,9 +32,10 @@ FIXTURES = ROOT / "examples" / "fixtures"
 
 # 期望值 —— 全部来自 docs/testing.md 与 examples/fixtures/personas.md 的公开承诺。
 EXPECTED_PERSONAS = 9
-# CN-01 是两周（09-07..09-13 + 09-14..09-20）；DE-01 只记了 5 天（09-14..09-18）；
-# 其余 7 人是 09-14..09-20 一周。8×7 + 7 + 5 = 68
-EXPECTED_DAYS = 68
+# CN-01 是两周（09-07..09-13 + 09-14..09-20）；CN-02 也是两周（09-14..09-20 + 09-21..09-27，
+# 后一周连续 5 天没称重）；DE-01 只记了 5 天（09-14..09-18）；其余 6 人是 09-14..09-20 一周。
+# 9 人各一周 = 63，+ CN-01 的第二周 7 + CN-02 的第二周 7 - DE-01 少记的 2 = 75
+EXPECTED_DAYS = 75
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -527,9 +528,10 @@ def main(argv: list) -> int:
             label_weeks.setdefault(rec.label, set()).add(parse_log.iso_week_of(rec.day))
 
     weeks_cn01 = sorted(label_weeks.get("CN-01", set()))
-    others_single = all(
-        len(weeks) == 1 for lab, weeks in label_weeks.items() if lab != "CN-01"
-    )
+    # 哪些档案跨了两周，必须是**确定的集合** —— 不是"随便谁都可以两周"。
+    # CN-02 之所以也在里面：它要证明读数不足时的退化，而退化只有存在"上一周"时才看得见。
+    multi_week = {lab for lab, weeks in label_weeks.items() if len(weeks) > 1}
+    multi_week_expected = {"CN-01", "CN-02"}
 
     rows18 = parse_log.weekly_rows(records, {})
     cn01_rows = [r for r in rows18 if r["label"] == "CN-01"]
@@ -537,14 +539,14 @@ def main(argv: list) -> int:
     first_trend_none = bool(cn01_rows) and cn01_rows[0]["trend"] is None
 
     ok18 = (len(weeks_cn01) == 2
-            and others_single
+            and multi_week == multi_week_expected
             and len(cn01_rows) == 2
             and first_trend_none
             and trend is not None
             and abs(trend - (-0.71)) < 0.02)
     rep.check("T18 两周分成两个 ISO 周，体重趋势按 7 天均值算出", ok18,
               f"CN-01 周={weeks_cn01} 趋势={trend} 首周趋势=None?{first_trend_none} "
-              f"其余档案均为单周={others_single}")
+              f"跨档案={sorted(multi_week)} 预期={sorted(multi_week_expected)}")
 
     # --- T19 蛋白达标按 90% 阈值、且逐档案用自己的目标 ----------------------
     # 动机：旧实现根本不计算这项，只打印「提示：需与 protein_target_g 比对后计算」——
@@ -594,13 +596,57 @@ def main(argv: list) -> int:
     distinct_targets = len({v for v in targets19.values() if v}) >= 6
 
     ok19 = (not mismatch19
-            and len(expected19) == 10
+            and len(expected19) == 11
             and at_boundary
             and below_boundary
             and distinct_targets)
     rep.check("T19 蛋白达标按 90% 阈值、且逐档案用自己的目标", ok19,
               f"档案-周数={len(expected19)} 边界135g={at_boundary} 134.9g={below_boundary} "
               f"目标各不相同={distinct_targets} 不一致={mismatch19[:3]}")
+
+    # --- T20 称重天数不足一周时，体重均值和趋势必须退化为 —— ---------------
+    # 动机：CN-02 的 2026-W39 只称了 2 天（09-22..09-26 连续 5 天没称，秤坏了）。
+    # 旧实现把这两个读数平均成「7 天均值 64.25 kg」，再与上周 64.58 相减得出 −0.33 kg，
+    # 周复盘于是会写出「掉得正常，维持目标」—— 而这两个读数一个在周末火锅之后（偏高）、
+    # 一个在换秤当天早上（偏低），差值的方向由水分决定，不由脂肪决定。
+    # **写出一个结论的成本是零，代价是整周的判断。** 所以均值不成立时，趋势必须一起变成 unknown。
+    rows20 = {r["week"]: r for r in rows19 if r["label"] == "CN-02"}
+    w38, w39 = rows20.get((2026, 38)), rows20.get((2026, 39))
+
+    # 连续缺测天数 —— 缺口的名字里写的是「4 天以上**连续**」，只数总数会放过一个只是零散的周
+    cn02_w39 = sorted(
+        (r for r in records
+         if r.label == "CN-02" and parse_log.iso_week_of(r.day) == (2026, 39)),
+        key=lambda r: r.day,
+    )
+    longest_gap = run = 0
+    for rec in cn02_w39:
+        run = run + 1 if rec.weight_kg is None else 0
+        longest_gap = max(longest_gap, run)
+
+    # 阈值边界：7 天里称 4 天必须算得出均值，称 3 天必须算不出。
+    # 与 T19 的 135/134.9 同理 —— 阈值两侧各放一个探针，改错方向时交叉验证不会陪着一起错。
+    def probe_weight_mean(n_weights):
+        days = []
+        for i in range(7):
+            rec = parse_log.DayRecord(date(2026, 9, 14) + timedelta(days=i), "PROBE")
+            rec.weight_kg = 80.0 if i < n_weights else None
+            days.append(rec)
+        return parse_log.weekly_rows(days, {})[0]["weight_mean"]
+
+    mean_with_three = probe_weight_mean(3)
+    mean_with_four = probe_weight_mean(4)
+
+    ok20 = (w38 is not None and w39 is not None
+            and w38["weigh_ins"] == 4 and w38["weight_mean"] is not None  # 4/7：刚好够
+            and w39["weigh_ins"] == 2                                      # 2/7：不够
+            and w39["weight_mean"] is None and w39["trend"] is None
+            and longest_gap >= 4
+            and mean_with_three is None and mean_with_four == 80.0)
+    rep.check("T20 称重不足 4 天：体重均值与趋势退化为 ——（4 天仍可算）", ok20,
+              f"W38 {None if w38 is None else (w38['weigh_ins'], w38['weight_mean'])} "
+              f"W39 {None if w39 is None else (w39['weigh_ins'], w39['weight_mean'], w39['trend'])} "
+              f"最长连续缺测={longest_gap} 探针3天={mean_with_three} 4天={mean_with_four}")
 
     return rep.summary()
 

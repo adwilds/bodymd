@@ -187,7 +187,7 @@ photos/             你拍的餐食和训练照片
 | AI 不听话 —— 自己发明格式、反复问你已经说过的信息、开始给你讲养生 | [`troubleshooting.md`](troubleshooting.md) 第一节 |
 | 脚本过不了 —— 校验器报 `FATAL` 或 `WARN` | 同一篇的[第八节](troubleshooting.md#8-校验器报-fatal-或-warn)，V1-V9 每个错误码都对着一个修法 |
 | 怀疑某一行写错了 | `python3 scripts/validate_log.py log/` |
-| 想确认整个仓库是好的 | `python3 scripts/selftest.py`（20 项，零依赖） |
+| 想确认整个仓库是好的 | `python3 scripts/selftest.py`（21 项，零依赖） |
 
 AI 不读 `SKILL.md`，绝大多数时候只有一个原因：**工具打开在了上一级目录。** 打开在仓库目录里，再让它读一次。
 

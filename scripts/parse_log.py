@@ -246,6 +246,12 @@ PROFILE_PROTEIN = re.compile(r"^\s*protein_target_g\s*:\s*([\d.]+)")
 # workflows/04-weekly-review.md：达到目标的 90% 即记为达标，不是 100%
 ADHERENCE_RATIO = 0.90
 
+# 一周里至少要称过这么多天，才允许把均值写成「7 天均值」。
+# 为什么是 4：一周 7 天，3 个或更少的读数就不再是采样，而是两个孤立点 ——
+# 一次周末火锅后的偏高读数、一次早上空腹的偏低读数，相减出来的差值方向由水分决定，
+# 却会被周复盘当成「这一周掉了多少」。缺测是常态，编出来的趋势不是数据。
+MIN_WEIGH_INS = 4
+
 
 def header_protein_target(path: Path):
     """从文件头部注释块里读 protein target（fixture 的写法）。
@@ -301,6 +307,11 @@ def weekly_rows(records: list, targets: dict) -> list:
 
     体重趋势用**7 天均值**而不是某一天的体重，也不是首尾两天 ——
     日间波动主要是水分，首尾相减等于让两天的水分决定一整周的结论。
+
+    但「7 天均值」要求这一周真的有 7 天的读数（至少 MIN_WEIGH_INS 天）。
+    读数不够时 weight_mean 返回 None，趋势随之变成 None —— 打印成「——」。
+    这条规则是被数据逼出来的：CN-02 的 2026-W39 只有 2 个读数，旧的实现照样
+    算出均值 64.25 kg 并与上周相减得出 −0.33 kg，看上去完全正常。
     """
     from collections import defaultdict
 
@@ -314,7 +325,8 @@ def weekly_rows(records: list, targets: dict) -> list:
         previous_mean = None
         for week in weeks:
             items = sorted(grouped[(label, week)], key=lambda r: r.day)
-            weight_mean = _mean([r.weight_kg for r in items])
+            weigh_ins = [r.weight_kg for r in items if r.weight_kg is not None]
+            weight_mean = _mean(weigh_ins) if len(weigh_ins) >= MIN_WEIGH_INS else None
 
             target = targets.get(label)
             if target:
@@ -330,6 +342,7 @@ def weekly_rows(records: list, targets: dict) -> list:
                 "label": label,
                 "week": week,
                 "days": len(items),
+                "weigh_ins": len(weigh_ins),
                 "avg_deficit": _mean([r.deficit for r in items]),
                 "weight_mean": weight_mean,
                 "trend": (weight_mean - previous_mean)
@@ -439,6 +452,8 @@ def main(argv: list) -> int:
     print()
     print("读法：")
     print(f"  · 体重趋势 = 当周 7 天体重均值 − 上一周 7 天体重均值。首周显示「——」是正常的。")
+    print(f"  · 一周称重少于 {MIN_WEIGH_INS} 天时，体重均值与趋势同样是「——」："
+          f"均值不成立，趋势也就无从谈起。")
     print(f"  · 蛋白达标按目标的 {ADHERENCE_RATIO:.0%} 计（不是 100%），见 workflows/04-weekly-review.md。")
     print("  · 只有一周数据时，周对周规则无法判定 —— 这不是脚本的缺陷，是数据的缺陷。")
     return 0

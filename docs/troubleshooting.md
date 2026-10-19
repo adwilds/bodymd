@@ -171,9 +171,9 @@ Exit code `0` = pass · `1` = fatal present · `2` = warnings only.
 Expected output on a healthy repo:
 
 ```bash
-python3 scripts/selftest.py                          # 20 checks → 20/20 PASS
+python3 scripts/selftest.py                          # 21 checks → 21/21 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → 0 fatal, 2 warnings (both intended)
-python3 scripts/parse_log.py    examples/fixtures/   # → 68 days / 9 personas
+python3 scripts/parse_log.py    examples/fixtures/   # → 75 days / 9 personas
 ```
 
 The **2 warnings are deliberate**: they prove the validator downgrades a missing optional field

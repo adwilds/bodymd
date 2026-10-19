@@ -1,11 +1,13 @@
 # personas.md — the nine fabricated users
 
 Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all nine, so weekly aggregates are
-directly comparable. Two of them deviate deliberately. **`CN-01` additionally carries
+directly comparable. Three of them deviate deliberately. **`CN-01` additionally carries
 `2026-09-07 .. 2026-09-13`** — a second, earlier week, because the weekly review recalculates from
 *this week vs last week* and a single-week fixture can never exercise that path (see the two-week
 table below). **`DE-01` carries only 5 of the 7 days** (`09-14 .. 09-18`) — the partial week, and
-the only fixture in which the adherence denominator can disagree with 7.
+the only fixture in which the adherence denominator can disagree with 7. **`CN-02` additionally
+carries `2026-09-21 .. 2026-09-27`** — a second, later week with five consecutive missing weigh-ins,
+the only fixture in which the weight mean cannot be computed at all.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -17,7 +19,7 @@ These are the baselines the fixtures were written against. Read them before read
 | ID | Name | Age / sex | City | Height | Weight (start → end) | Protein target | Training program | Wearable | Logging habit |
 |---|---|---|---|---|---|---|---|---|---|
 | `CN-01` | 李明 Li Ming | 32 / M | Shanghai | 178 cm | 82.4 → 81.6 kg | 150 g | Squat / deadlift / bench, 4–5×/wk | Mi Band | Photo + voice, logs everything |
-| `CN-02` | 王婷 Wang Ting | 29 / F | Chengdu | 163 cm | 64.8 → 64.4 kg | 105 g | Glute bridge / squat, 3×/wk | none | Photo, forgets the scale |
+| `CN-02` | 王婷 Wang Ting | 29 / F | Chengdu | 163 cm | 64.8 → 63.9 kg | 105 g | Glute bridge / squat, 3×/wk | none | Photo, forgets the scale — and in week 2 it breaks |
 | `DE-01` | Jonas Brandt | 34 / M | Berlin | 182 cm | 88.9 → 88.6 kg | 155 g | Push / pull / legs, 3×/wk | none (sleep from a watch) | Manual + photo, never logs at the weekend |
 | `US-01` | Michael Chen | 38 / M | San Francisco | 175 cm | 86.0 → 86.2 kg | 165 g | 5×5, 3–4×/wk | WHOOP | Photo, logs takeout as-is |
 | `US-02` | Sarah Williams | 34 / F | Austin, TX | 168 cm | 74.2 → 74.2 kg | 130 g | Upper/lower, 4×/wk | Apple Watch | Photo + manual, drinks on Fridays |
@@ -52,19 +54,31 @@ failed the test.
 
 **Context.** Designer in Chengdu. Home cooking dominates, and Sichuan cooking means a lot of
 rapeseed oil that a photo cannot measure. She trains at a small studio three times a week.
-Her bathroom scale has been out of batteries twice this week.
+Her bathroom scale has been out of batteries twice in the first week; in the second it gives up
+entirely, and the replacement only arrives on the Sunday.
 
 **Why she exists.** The hard case for **estimation under fat**: the AI can see the food but
 cannot see the oil. She also does something almost no fixture does — she *overrides* the
-model and says so in `edited:`.
+model and says so in `edited:`. And in her second week (`09-21 → 09-27`) her scale dies for
+good, which makes her the **coverage** case as well: five consecutive days with no weight.
 
 **Injected failures.** `edited: 米饭 150g->120g` on one meal (a human correction of an
 AI overestimate); three days with no weight logged (`unknown`); one day at 1,630 kcal with
-64 g protein; an explicit note that oil is the weakest number of the day.
+64 g protein; an explicit note that oil is the weakest number of the day. In the second week:
+**five consecutive missing weigh-ins** (`09-22 → 09-26`, the battery cover stripped), a 63 g
+protein day, one 2,810 kcal birthday hotpot, and a new scale on the Sunday that replaces the
+old one — so the two readings that bracket the gap come from two different pieces of hardware.
 
 **What a correct report must say.** Oil is the dominant unknown in her log, and the correct
 response is to reduce the variance (cook with a measured spoon for a week) rather than to
 guess a bigger number. A report that silently picks a value has failed the test.
+
+In the second week the quantity problem is different: **there is no weekly weight to report.**
+Two readings bracketing five blank days are not a 7-day mean — the first is a Monday after a
+hotpot, the second a Sunday morning on a brand-new scale — so both the mean and the trend must
+print `——`. A report that averages them to `64.25 kg` and subtracts last week's `64.58 kg` will
+say "−0.33 kg, pace normal, hold the plan", which is a conclusion the data cannot carry. The
+front half of her log (4 weigh-ins of 7) is exactly the smallest number that still can.
 
 ---
 
@@ -201,13 +215,13 @@ Backfilling them would corrupt the same denominator the weekly review runs on.
 
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **68 days / 9 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **75 days / 9 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
 |---|---|---|---|---|
 | `CN-01` | 14 | 446 / 449 kcal | 9 | Two ISO weeks; protein 69–129 g vs a 150 g target, **0/7 days hit**; 1 day on the `computed` path. See the two-week table below |
-| `CN-02` | 7 | 234 kcal | 3 | 3 days weight `unknown`; 1 manual correction; 1 `computed` day |
+| `CN-02` | 14 | 234 / 217 kcal | 3 / 4 | Two ISO weeks; 8 days weight `unknown` (5 of them consecutive); 1 manual correction; 1 `computed` day. **W39 has only 2 weigh-ins → weight mean and trend are `——`** |
 | `DE-01` | 5 | 598 kcal | 3 | **A partial week: 5 of 7 days logged.** `09-19`/`09-20` absent (not zero); adherence reads `1/5`, not `1/7` |
 | `US-01` | 7 | 687 kcal | 4 | 1 meal logged as `unknown`; Saturday +3,510 kcal (−610) |
 | `US-02` | 7 | 442 kcal (6 days) | 4 | Alcohol + chips; Friday −390; Saturday has no Totals → `——` |
@@ -231,6 +245,40 @@ every weekly average upward — this fixture exists to catch that.
 
 **Note on `MX-01`:** it is the only file that triggers `WARN` (2 items), by design, to prove
 the validator degrades instead of rejecting. Everything else is clean.
+
+**Note on `CN-02`'s second week:** `2026-W39` is 7 recorded days with **2 weigh-ins** — `09-22` to
+`09-26` are five *consecutive* recorded days whose `## Body` line reads `weight_kg: unknown`
+(the scale died, then the battery-cover screw stripped). Those days are **recorded**, not absent:
+meals, sleep and `## Totals` are all there, every deficit in that week is fully computable, and
+the two rest days among them simply have no `## Training` section. The only thing missing is the
+ground truth.
+
+Two readings bracketing five blank days are not a "7-day mean", so both the mean and the trend
+print `——`. The naive output is `64.25 kg → −0.33 kg`, which looks *completely normal*: 0.5% of
+bodyweight per week, inside the target band, so the review would say "hold the plan". The two
+readings are a Monday after a hotpot (high) and a Sunday morning on a brand-new scale (low);
+their difference measures water and hardware, not fat. **A number that looks normal is the most
+expensive kind of wrong answer**, which is why this is a fixture and not a paragraph.
+
+The other week in the same file is the boundary on the other side: `2026-W38` has **4** weigh-ins
+and *does* produce a mean (`64.58 kg`). 4 of 7 computes, 3 of 7 does not — so a parser that
+requires 7, or one that accepts 2, both fail on this one persona.
+
+---
+
+## `CN-02` across its two ISO weeks
+
+| ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
+|---|---|---|---|---|---|---|---|
+| `2026-W38` | 09-14 → 09-20 | 7 | 234 kcal | 64.58 kg (4 weigh-ins) | `——` (first week) | 1/7 @105 g | 3 days |
+| `2026-W39` | 09-21 → 09-27 | 7 | 217 kcal | `——` (2 weigh-ins) | `——` (no mean to subtract) | 1/7 @105 g | 4 days |
+
+**What a correct review must conclude.** Nothing about weight. The mean is unknown, so the trend
+is unknown, and both of the first two recalculation rules (`falling faster than 0.75%`, `flat for
+two consecutive weeks`) are **unanswerable this week** — not "satisfied", not "not satisfied".
+The honest output names the missing input and asks for it: get four weigh-ins next week before
+touching calories. A review that prints `−0.33 kg` has run a rule on a number the log never
+contained.
 
 ---
 
