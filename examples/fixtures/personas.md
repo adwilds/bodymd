@@ -7,7 +7,9 @@ directly comparable. Three of them deviate deliberately. **`CN-01` additionally 
 table below). **`DE-01` carries only 5 of the 7 days** (`09-14 .. 09-18`) — the partial week, and
 the only fixture in which the adherence denominator can disagree with 7. **`CN-02` additionally
 carries `2026-09-21 .. 2026-09-27`** — a second, later week with five consecutive missing weigh-ins,
-the only fixture in which the weight mean cannot be computed at all.
+the only fixture in which the weight mean cannot be computed at all. **`US-02` additionally carries
+`2026-09-21 .. 2026-09-27`** — a second, later week whose 7-day mean equals the first week's
+(74.20 kg), the only fixture in which the "flat for 2 consecutive weeks" rule is reachable.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -22,7 +24,7 @@ These are the baselines the fixtures were written against. Read them before read
 | `CN-02` | 王婷 Wang Ting | 29 / F | Chengdu | 163 cm | 64.8 → 63.9 kg | 105 g | Glute bridge / squat, 3×/wk | none | Photo, forgets the scale — and in week 2 it breaks |
 | `DE-01` | Jonas Brandt | 34 / M | Berlin | 182 cm | 88.9 → 88.6 kg | 155 g | Push / pull / legs, 3×/wk | none (sleep from a watch) | Manual + photo, never logs at the weekend |
 | `US-01` | Michael Chen | 38 / M | San Francisco | 175 cm | 86.0 → 86.2 kg | 165 g | 5×5, 3–4×/wk | WHOOP | Photo, logs takeout as-is |
-| `US-02` | Sarah Williams | 34 / F | Austin, TX | 168 cm | 74.2 → 74.2 kg | 130 g | Upper/lower, 4×/wk | Apple Watch | Photo + manual, drinks on Fridays |
+| `US-02` | Sarah Williams | 34 / F | Austin, TX | 168 cm | 74.2 → 74.1 kg (mean 74.20 → 74.20) | 130 g | Upper/lower, 4×/wk | Apple Watch | Photo + manual, drinks on Fridays |
 | `UK-01` | James O'Brien | 41 / M | Manchester | 180 cm | 93.5 → 94.3 kg | 160 g | Squat / bench / deadlift, 3×/wk | Garmin | Manual, estimates loosely |
 | `MX-01` | Carlos Ramírez | 27 / M | Mexico City | 172 cm | 78.0 → 78.3 kg | 145 g | Powerbuilding, 4×/wk | none | Voice, fast and imprecise |
 | `NG-01` | Adaeze Okonkwo | 31 / F | Lagos + London | 165 cm | 70.5 → 70.5 kg | 120 g | Squat / RDL, 3×/wk | Fitbit | Manual, skips days when travelling |
@@ -107,13 +109,28 @@ beans, chips and queso are staples — a lot of it is genuinely healthy and a sp
 it is not. Trains four times a week and is the most consistent lifter in the set.
 
 **Why she exists.** She is the **liquid-calorie and hidden-chip** case: two margaritas and a
-bowl of queso add roughly 900 kcal to a day that photographs as a normal taco day.
+bowl of queso add roughly 900 kcal to a day that photographs as a normal taco day. In her second
+week (`09-21 → 09-27`) she is also the **plateau** case: the 7-day weight mean is the same
+`74.20 kg` two weeks running, which makes the "flat for 2 consecutive weeks → increase deficit by
+150 kcal" rule reachable for the first time.
 
 **Injected failures.** 1,240 kcal dinner including two margaritas; a chips-and-queso snack;
 one day with no `intake_kcal` in Totals (aggregator computes it); Friday at −390 kcal deficit.
+In the second week: a 2,570 kcal Friday (−220 kcal deficit) that reproduces the same pattern, one
+meal logged as `source: estimated` because a restaurant plate cannot be photographed into a number,
+and two protein misses (107 g Friday, 106 g Saturday) that put adherence at exactly `5/7`.
 
 **What a correct report must say.** The confounder is alcohol and restaurant chips, not
 tortillas. A report that tells her to cut carbs has misread the data.
+
+In the second week the question is different: **two weeks of a real ~400 kcal average deficit and
+no movement in the mean.** A log that is being executed (5 of 7 protein days, 4 sessions, nothing
+skipped) and a scale that will not move is a plateau, not an adherence problem — so the plan
+changes, not the effort. The review must raise the deficit by 150 kcal and say why. Two traps sit
+on either side of that answer: reading the week as `−0.3 kg` (first minus last: `74.4 → 74.1`) and
+concluding "still falling, hold", or reading its `5/7` adherence as too low and spending another
+week on protein. The mean is what makes it flat, and `5/7` is deliberately the smallest number that
+does not trip the protein rule (`< 5 of 7`).
 
 ---
 
@@ -215,7 +232,7 @@ Backfilling them would corrupt the same denominator the weekly review runs on.
 
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **75 days / 9 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **82 days / 9 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
@@ -224,7 +241,7 @@ These are the real numbers, not estimates. If your run disagrees, the parser or 
 | `CN-02` | 14 | 234 / 217 kcal | 3 / 4 | Two ISO weeks; 8 days weight `unknown` (5 of them consecutive); 1 manual correction; 1 `computed` day. **W39 has only 2 weigh-ins → weight mean and trend are `——`** |
 | `DE-01` | 5 | 598 kcal | 3 | **A partial week: 5 of 7 days logged.** `09-19`/`09-20` absent (not zero); adherence reads `1/5`, not `1/7` |
 | `US-01` | 7 | 687 kcal | 4 | 1 meal logged as `unknown`; Saturday +3,510 kcal (−610) |
-| `US-02` | 7 | 442 kcal (6 days) | 4 | Alcohol + chips; Friday −390; Saturday has no Totals → `——` |
+| `US-02` | 14 | 442 / 383 kcal | 4 / 4 | Alcohol + chips; **plateau: identical mean both weeks (74.20 kg), trend `+0.00`**; Friday −390 then −220; W38 Saturday has no Totals → `——`; adherence 4/7 → 5/7 |
 | `UK-01` | 7 | 623 kcal | 3 | Weight rising 93.5 → 94.3 kg; Sunday roast 1,420 kcal |
 | `MX-01` | 7 | 373 kcal | 4 | Thursday 48 g protein; Saturday −780; 2 validator warnings |
 | `NG-01` | 7 | 419 kcal | 3 | **One day with no Training section at all** |
@@ -282,12 +299,40 @@ contained.
 
 ---
 
+## `US-02` across its two ISO weeks
+
+| ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
+|---|---|---|---|---|---|---|---|
+| `2026-W38` | 09-14 → 09-20 | 7 | 442 kcal (6 days) | 74.20 kg (7 weigh-ins) | `——` (first week) | 4/7 @130 g | 4 days |
+| `2026-W39` | 09-21 → 09-27 | 7 | 383 kcal | 74.20 kg (7 weigh-ins) | **`+0.00` kg** | 5/7 @130 g | 4 days |
+
+**What a correct review must conclude.** This is a plateau, and the rule that fires is:
+
+> if weight trend is flat for 2 consecutive weeks → **increase deficit by 150 kcal**
+
+The two weeks have **the same 7-day mean to the hundredth of a kilo** while the daily readings move
+0.8 kg across the week. That is the whole argument for the mean: `74.4 → 74.1` by endpoints says
+`−0.3 kg`, which would read as "still falling, hold the plan", and the week is not falling at all.
+`74.4` (Monday) and `74.1` (Sunday) are two single mornings; `74.20` twice is the plateau.
+
+Adherence does **not** get in the way, and that is deliberate: `5/7` is the smallest number of days
+that leaves the protein rule (`< 5 of 7 → fix protein first`) silent. At `4/7` — the first week's
+figure — the protein rule would preempt the plateau, and a fixture that never lets the plateau rule
+be the operative one would close nothing. Both misses are Friday and Saturday, the two days the
+alcohol and the chips are also in; the review should name that link, not treat five days as a
+failure.
+
+The proposed change is therefore one variable, with its arithmetic shown: deficit `+150 kcal/day`,
+everything else held.
+
+---
+
 ## `CN-01` across its two ISO weeks
 
-This is the only place in the repo where a **week-over-week** number can be computed, and
-therefore the only place where `workflows/04-weekly-review.md`'s recalculation rules can be
-checked at all. Both rules that begin with "two consecutive weeks" or "vs last week" are
-unreachable without it.
+This is the only persona in the repo whose week-over-week trend is **falling** — `CN-02`'s second
+week has no mean to subtract, and `US-02`'s second week is flat — and therefore the only place where
+the `falling faster than 0.75%` branch of `workflows/04-weekly-review.md` can be checked at all,
+including its precedence against the protein rule.
 
 | ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
 |---|---|---|---|---|---|---|---|

@@ -103,7 +103,7 @@ any of this outlives the next model release.
 | `docs/run-with-any-model.md` | ⭐ Setup for each tool — Claude Code, Codex, Cursor, ChatGPT, Kimi, 豆包 |
 | `docs/troubleshooting.md` | ⭐ **When something breaks.** The ten failures I have seen, with fixes, plus the validator's error codes |
 | `docs/` | Why local data, BYOK setup, user guide, dev guide, testing plan, FAQ |
-| `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (21 checks, stdlib only) |
+| `scripts/selftest.py` | ⭐ One command proves the whole repo is intact (22 checks, stdlib only) |
 | `scripts/` | Reference implementation: contract validator + weekly aggregator |
 | `examples/walkthrough.md` | ⭐ **A complete run, start to finish** — one day plus the weekly review, with the real files and the real script output |
 | `examples/sample-week.md` | One worked week, with what each lesson changed in this repo |
@@ -182,15 +182,16 @@ notes: [`docs/run-with-any-model.md`](docs/run-with-any-model.md).
 ### Path C — just run the tests
 
 ```bash
-python3 scripts/selftest.py                          # 21 checks → expect 21/21 PASS
+python3 scripts/selftest.py                          # 22 checks → expect 22/22 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # → expect 75 days / 9 personas
+python3 scripts/parse_log.py    examples/fixtures/   # → expect 82 days / 9 personas
 ```
 
 The third command reads nine test users — Chinese, Chinese-American, British, Mexican,
 Nigerian, South Asian, German, and two more — one week each, except one who logged **five days of
-seven** and two who carry an extra week (one of them with **five consecutive days of no weigh-ins**,
-so her weekly weight trend cannot be computed at all). **They are fabricated, and they are supposed
+seven** and three who carry an extra week (one with **five consecutive days of no weigh-ins**, so
+her weekly weight trend cannot be computed at all; another with **two consecutive weeks at the same
+mean**, so the plateau rule finally has data to run on). **They are fabricated, and they are supposed
 to be messy:** a skipped lunch, a scale with dead batteries, a 48 g protein day, a day with no
 training logged at all, and a week where two days are missing outright. Disclosure and red lines:
 [`examples/fixtures/README.md`](examples/fixtures/README.md).

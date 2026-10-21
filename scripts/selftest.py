@@ -33,9 +33,10 @@ FIXTURES = ROOT / "examples" / "fixtures"
 # 期望值 —— 全部来自 docs/testing.md 与 examples/fixtures/personas.md 的公开承诺。
 EXPECTED_PERSONAS = 9
 # CN-01 是两周（09-07..09-13 + 09-14..09-20）；CN-02 也是两周（09-14..09-20 + 09-21..09-27，
-# 后一周连续 5 天没称重）；DE-01 只记了 5 天（09-14..09-18）；其余 6 人是 09-14..09-20 一周。
-# 9 人各一周 = 63，+ CN-01 的第二周 7 + CN-02 的第二周 7 - DE-01 少记的 2 = 75
-EXPECTED_DAYS = 75
+# 后一周连续 5 天没称重）；US-02 也是两周（09-14..09-20 + 09-21..09-27，两周均值相同 = 平台期）；
+# DE-01 只记了 5 天（09-14..09-18）；其余 6 人是 09-14..09-20 一周。
+# 9 人各一周 = 63，+ CN-01 的第二周 7 + CN-02 的第二周 7 + US-02 的第二周 7 - DE-01 少记的 2 = 82
+EXPECTED_DAYS = 82
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -530,8 +531,9 @@ def main(argv: list) -> int:
     weeks_cn01 = sorted(label_weeks.get("CN-01", set()))
     # 哪些档案跨了两周，必须是**确定的集合** —— 不是"随便谁都可以两周"。
     # CN-02 之所以也在里面：它要证明读数不足时的退化，而退化只有存在"上一周"时才看得见。
+    # US-02 之所以也在里面：它要证明「连续两周均值相同」这条平台期规则真的可达（见 T21）。
     multi_week = {lab for lab, weeks in label_weeks.items() if len(weeks) > 1}
-    multi_week_expected = {"CN-01", "CN-02"}
+    multi_week_expected = {"CN-01", "CN-02", "US-02"}
 
     rows18 = parse_log.weekly_rows(records, {})
     cn01_rows = [r for r in rows18 if r["label"] == "CN-01"]
@@ -596,7 +598,7 @@ def main(argv: list) -> int:
     distinct_targets = len({v for v in targets19.values() if v}) >= 6
 
     ok19 = (not mismatch19
-            and len(expected19) == 11
+            and len(expected19) == 12
             and at_boundary
             and below_boundary
             and distinct_targets)
@@ -647,6 +649,47 @@ def main(argv: list) -> int:
               f"W38 {None if w38 is None else (w38['weigh_ins'], w38['weight_mean'])} "
               f"W39 {None if w39 is None else (w39['weigh_ins'], w39['weight_mean'], w39['trend'])} "
               f"最长连续缺测={longest_gap} 探针3天={mean_with_three} 4天={mean_with_four}")
+
+    # --- T21 连续两周均值相同 = 平台期：趋势是 0.00，不是 ——，也不是端点差 ---------
+    # 动机：workflows/04-weekly-review.md 的第二条重算规则是
+    #       「体重连续两周持平 -> 缺口 +150 kcal」。在 US-02 的第二周存在之前，
+    #       这个集合里没有任何一个人同时满足「有两周」和「体重持平」：
+    #       CN-01 的两周在掉（-0.71 kg），CN-02 的第二周均值根本算不出来。
+    #       于是那条规则**无法被任何数据触发** —— 它被写错、写反、或者删掉，
+    #       所有门槛依然是绿的。一条不可达的规则不是规则，是装饰。
+    #
+    # 这条断言钉住四件事，少一件这个缺口就只是「有数据」，不是「可测」：
+    #   ① 两周都必须真的算得出均值 —— 否则 0.00 只是 None 的伪装
+    #   ② 均值相同且趋势恰为 0.00 —— 平台期的定义是均值，不是「差不多」
+    #   ③ 端点差不为 0（-0.3 kg）—— 首尾相减会把平台期读成「还在掉」，
+    #      这条把两种算法在同一份数据上分开
+    #   ④ 蛋白达标 5/7 —— 正好踩在「< 5 才拦」的边界上。若低于 5，
+    #      平台期规则会被蛋白规则先截走，数据看着对，规则依然不可达
+    us02_rows = {r["week"]: r for r in rows19 if r["label"] == "US-02"}
+    s38, s39 = us02_rows.get((2026, 38)), us02_rows.get((2026, 39))
+    us02_w39 = sorted(
+        (r for r in records
+         if r.label == "US-02" and parse_log.iso_week_of(r.day) == (2026, 39)),
+        key=lambda r: r.day,
+    )
+    endpoint_delta = (us02_w39[-1].weight_kg - us02_w39[0].weight_kg) if us02_w39 else None
+
+    same_mean = (s38 is not None and s39 is not None
+                 and s38["weight_mean"] is not None
+                 and s39["weight_mean"] is not None
+                 and s39["weight_mean"] == s38["weight_mean"])
+    flat_trend = s39 is not None and s39["trend"] is not None and abs(s39["trend"]) < 0.005
+    endpoints_disagree = endpoint_delta is not None and abs(endpoint_delta) > 0.2
+    protein_not_blocking = s39 is not None and s39["adherence"] == "5/7"
+
+    ok21 = (same_mean and flat_trend and endpoints_disagree and protein_not_blocking
+            and s39["weigh_ins"] == 7)
+    rep.check("T21 连续两周均值相同 → 趋势 0.00（端点差 -0.3 kg 不得参与判定）", ok21,
+              f"W38 均值={None if s38 is None else s38['weight_mean']} "
+              f"W39 均值={None if s39 is None else s39['weight_mean']} "
+              f"W39 趋势={None if s39 is None else s39['trend']} "
+              f"称重={None if s39 is None else s39['weigh_ins']} "
+              f"端点差={endpoint_delta} 蛋白={None if s39 is None else s39['adherence']}")
 
     return rep.summary()
 

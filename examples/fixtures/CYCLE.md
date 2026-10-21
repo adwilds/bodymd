@@ -46,9 +46,9 @@ but they must be *internally consistent* imperfections.
 **4. Run every gate.** All four must pass before anything is committed:
 
 ```bash
-python3 scripts/selftest.py                          # expect 21/21 PASS
+python3 scripts/selftest.py                          # expect 22/22 PASS
 python3 scripts/validate_log.py examples/fixtures/   # expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # expect 75 days / 9 personas
+python3 scripts/parse_log.py    examples/fixtures/   # expect 82 days / 9 personas
 ```
 
 Plus: every relative Markdown link resolves.
@@ -91,7 +91,7 @@ Ordered by value. Strike through an entry when closed, and note the commit.
 |---|---|---|
 | ~~G1~~ | ~~**A partial week** — a persona who logged 5 of 7 days~~ → **CLOSED** by `DE-01` (`09-14 → 09-18`, five of seven days): the weekly row prints `5` days / `1/5 @155 g`, and T19's independent recomputation rejects a hardcoded `/7`. Commit: *"Close G1 — a partial week, so the adherence denominator cannot be 7"* | The adherence denominator. "0/5" and "0/7" are different claims, and a naive implementation reports the same number for both |
 | G2 | ~~**Weight missing for 4+ consecutive days**~~ → **CLOSED** by `CN-02` (`2026-09-21 → 09-27`, five consecutive missing days, only 2 weigh-ins): the week's mean and trend print `——`, and T20 pins both sides of the threshold (4 of 7 still computes). It found a real defect: the old aggregator averaged the two stray readings into `64.25 kg` and reported `-0.33 kg`. Commit: *"Close G2 — five blank days are not a week's mean"* | That the trend degrades to `——` instead of averaging two stray weigh-ins into a confident conclusion |
-| G3 | **A genuine plateau** — two consecutive weeks with the same mean | The `flat for 2 consecutive weeks → increase deficit by 150 kcal` rule. Currently unreachable: no persona has two weeks *and* flat weight |
+| ~~G3~~ | ~~**A genuine plateau** — two consecutive weeks with the same mean~~ → **CLOSED** by `US-02` (`2026-09-21 → 09-27`, a second week whose 7-day mean is the identical 74.20 kg): the trend prints `+0.00` and T21 pins it, together with the two things that would hide it — the week's endpoints read `74.4 → 74.1` (`−0.3 kg`, i.e. "still falling"), and its `5/7` adherence sits exactly one day above the protein rule that would otherwise preempt the plateau. Commit: *"Close G3 — two weeks at the same mean, so the plateau rule can fire"* | The `flat for 2 consecutive weeks → increase deficit by 150 kcal` rule. Currently unreachable: no persona has two weeks *and* flat weight |
 | G4 | **A persona gaining weight** | That the "falling faster than 0.75%" branch does not fire on the wrong sign |
 | G5 | **A week spanning an ISO year boundary** (e.g. 2026-12-28 → 2027-01-03) | That week numbering does not silently merge two different weeks into one label |
 | G6 | **A persona with no `protein target` in the header** | That the adherence column shows `——` rather than guessing a target |

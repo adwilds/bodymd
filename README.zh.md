@@ -93,11 +93,11 @@
 | `docs/zh-CN/troubleshooting.md` | ⭐ **出问题时看这个。** 我真实踩过的十个坑 + 校验器错误码对照表 |
 | `README.md` | 英文首页 —— `bodymd`，原生写的，不是从中文翻过去的 |
 | `docs/` | 为什么放本地、BYOK 配置、使用手册、开发手册、测试方案、FAQ、英文故障排查 |
-| `scripts/selftest.py` | ⭐ 一条命令证明整个仓库完好（21 项检查，零依赖） |
+| `scripts/selftest.py` | ⭐ 一条命令证明整个仓库完好（22 项检查，零依赖） |
 | `scripts/` | 参考实现：契约校验器 + 周聚合器 |
 | `docs/zh-CN/walkthrough.md` | ⭐ **完整示例** —— 一天 + 周日复盘，真实文件、真实输出 |
 | `examples/sample-week.md` | 真实跑过的一周，含「这条教训改了什么」 |
-| `examples/fixtures/` | 9 个虚构用户，共 75 天（两人各带两周，一人只记 5 天） |
+| `examples/fixtures/` | 9 个虚构用户，共 82 天（三人各带两周，一人只记 5 天） |
 
 ### 你自己的文件夹长什么样
 
@@ -162,12 +162,12 @@ cp templates/profile.md profile.md     # 打开它，填你自己的数字
 ### 路径 C — 先跑测试
 
 ```bash
-python3 scripts/selftest.py                          # 21 项检查 → 预期 21/21 通过
+python3 scripts/selftest.py                          # 22 项检查 → 预期 22/22 通过
 python3 scripts/validate_log.py examples/fixtures/   # → 预期 0 致命，2 警告
-python3 scripts/parse_log.py    examples/fixtures/   # → 预期 75 天 / 9 个档案
+python3 scripts/parse_log.py    examples/fixtures/   # → 预期 82 天 / 9 个档案
 ```
 
-第三条命令读的是 9 个测试用户 —— 中国人、华裔美国人、英国人、墨西哥人、尼日利亚人、南亚裔、德国人 —— 主要是一人一周，**其中一人只记了 5 天**，另有两人各多带一周（其中一人的第二周**连续 5 天没有称重**，因此那一周的体重趋势根本算不出来，只能显示「——」）。**全部是虚构的，而且是故意做得乱七八糟的**：漏记的午餐、没电的体重秤、蛋白只有 48 g 的一天、完全没记训练的一天，以及一周里直接缺了两天的记录。披露与红线见 [`examples/fixtures/README.md`](examples/fixtures/README.md)。
+第三条命令读的是 9 个测试用户 —— 中国人、华裔美国人、英国人、墨西哥人、尼日利亚人、南亚裔、德国人 —— 主要是一人一周，**其中一人只记了 5 天**，另有三人各多带一周（其中一人的第二周**连续 5 天没有称重**，因此那一周的体重趋势根本算不出来，只能显示「——」；另一人的两周**体重均值完全相同**，于是「连续两周持平 → 缺口 +150 kcal」这条规则第一次有了可跑的数据）。**全部是虚构的，而且是故意做得乱七八糟的**：漏记的午餐、没电的体重秤、蛋白只有 48 g 的一天、完全没记训练的一天，以及一周里直接缺了两天的记录。披露与红线见 [`examples/fixtures/README.md`](examples/fixtures/README.md)。
 
 那 **2 条警告是故意的**。它们用来证明：校验器遇到缺一个非必填字段时，会降级成警告，而不是把文件打回去。**记录不完整才是常态，一个会因此拒收文件的校验器，只是摆设。**
 
