@@ -34,9 +34,10 @@ FIXTURES = ROOT / "examples" / "fixtures"
 EXPECTED_PERSONAS = 9
 # CN-01 是两周（09-07..09-13 + 09-14..09-20）；CN-02 也是两周（09-14..09-20 + 09-21..09-27，
 # 后一周连续 5 天没称重）；US-02 也是两周（09-14..09-20 + 09-21..09-27，两周均值相同 = 平台期）；
-# DE-01 只记了 5 天（09-14..09-18）；其余 6 人是 09-14..09-20 一周。
-# 9 人各一周 = 63，+ CN-01 的第二周 7 + CN-02 的第二周 7 + US-02 的第二周 7 - DE-01 少记的 2 = 82
-EXPECTED_DAYS = 82
+# UK-01 也是两周（09-14..09-20 + 09-21..09-27，第二周均值高 0.90 kg = 在增重）；
+# DE-01 只记了 5 天（09-14..09-18）；其余 5 人是 09-14..09-20 一周。
+# 9 人各一周 = 63，+ 四个第二周 7x4 = 28 - DE-01 少记的 2 = 89
+EXPECTED_DAYS = 89
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -532,8 +533,9 @@ def main(argv: list) -> int:
     # 哪些档案跨了两周，必须是**确定的集合** —— 不是"随便谁都可以两周"。
     # CN-02 之所以也在里面：它要证明读数不足时的退化，而退化只有存在"上一周"时才看得见。
     # US-02 之所以也在里面：它要证明「连续两周均值相同」这条平台期规则真的可达（见 T21）。
+    # UK-01 之所以也在里面：它要证明趋势的**符号**被读对了 —— 一个在增重的人（见 T22）。
     multi_week = {lab for lab, weeks in label_weeks.items() if len(weeks) > 1}
-    multi_week_expected = {"CN-01", "CN-02", "US-02"}
+    multi_week_expected = {"CN-01", "CN-02", "US-02", "UK-01"}
 
     rows18 = parse_log.weekly_rows(records, {})
     cn01_rows = [r for r in rows18 if r["label"] == "CN-01"]
@@ -598,7 +600,7 @@ def main(argv: list) -> int:
     distinct_targets = len({v for v in targets19.values() if v}) >= 6
 
     ok19 = (not mismatch19
-            and len(expected19) == 12
+            and len(expected19) == 13
             and at_boundary
             and below_boundary
             and distinct_targets)
@@ -690,6 +692,48 @@ def main(argv: list) -> int:
               f"W39 趋势={None if s39 is None else s39['trend']} "
               f"称重={None if s39 is None else s39['weigh_ins']} "
               f"端点差={endpoint_delta} 蛋白={None if s39 is None else s39['adherence']}")
+
+    # --- T22 体重在涨：趋势的符号必须被读对，光看幅度会把「增重」判成「掉太快」 --------
+    # 动机：workflows/04-weekly-review.md 的第一条重算规则是
+    #       「体重掉得比每周 0.75% 快 -> 缺口 −100 kcal」。在 UK-01 的第二周存在之前，
+    #       这个集合里的每一份两周数据趋势都是负的或 0（CN-01 −0.71、US-02 0.00、
+    #       CN-02 的第二周没有均值）—— 于是「只看幅度、不看符号」的实现
+    #       （写成 abs(trend) / weight > 0.0075 就行）能通过全部门槛，
+    #       而它对一个正在增重的人会输出「减 100 kcal」，方向正好反了。
+    #
+    # 这条断言钉住四件事，缺一件这个缺口就只是「有数据」，不是「可测」：
+    #   ① 两周都算得出均值、第二周 7 天全有称重 —— 否则趋势只是 None 的伪装
+    #   ② 趋势为正且恰是 +0.90 kg —— 平台期规则（趋势接近 0）必须保持沉默
+    #   ③ |趋势| / 体重 > 0.75% —— 幅度**足够**触发那条分支，唯一挡住它的是符号
+    #   ④ 蛋白达标 6/7 —— 若低于 5/7，蛋白规则会先截走这个结论，
+    #      符号写错也看不出来。他第一周恰好是 0/7，所以这两周必须来自「蛋白已修好」之后：
+    #      同一个档案如果两周都是 0/7，这个缺口仍然不可测。
+    uk01_rows = {r["week"]: r for r in rows19 if r["label"] == "UK-01"}
+    j38, j39 = uk01_rows.get((2026, 38)), uk01_rows.get((2026, 39))
+    gain = (j39["trend"] if (j38 is not None and j39 is not None) else None)
+    gain_pct = (gain / j39["weight_mean"]
+                if (gain is not None and j39["weight_mean"]) else None)
+    uk01_w39 = sorted(
+        (r for r in records
+         if r.label == "UK-01" and parse_log.iso_week_of(r.day) == (2026, 39)),
+        key=lambda r: r.day,
+    )
+    both_means = (j38 is not None and j39 is not None
+                  and j38["weight_mean"] is not None and j39["weight_mean"] is not None)
+    gaining = gain is not None and gain > 0 and abs(gain - 0.90) < 0.02
+    magnitude_would_trip = gain_pct is not None and gain_pct > 0.0075
+    not_flat = gain is not None and abs(gain) > 0.2
+    protein_silent = j39 is not None and j39["adherence"] == "6/7"
+
+    ok22 = (both_means and gaining and magnitude_would_trip and not_flat
+            and protein_silent and j39["weigh_ins"] == 7 and len(uk01_w39) == 7)
+    pct_text = "——" if gain_pct is None else "{:.2%}".format(gain_pct)
+    rep.check("T22 在增重的人：趋势 +0.90 kg 为正，0.75% 分支因符号而沉默", ok22,
+              f"W38 均值={None if j38 is None else j38['weight_mean']} "
+              f"W39 均值={None if j39 is None else j39['weight_mean']} "
+              f"趋势={gain} 占体重={pct_text}（>0.75% 才算有牙） "
+              f"蛋白={None if j39 is None else j39['adherence']} "
+              f"称重={None if j39 is None else j39['weigh_ins']}")
 
     return rep.summary()
 

@@ -1,7 +1,7 @@
 # personas.md — the nine fabricated users
 
 Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all nine, so weekly aggregates are
-directly comparable. Three of them deviate deliberately. **`CN-01` additionally carries
+directly comparable. Four of them deviate deliberately. **`CN-01` additionally carries
 `2026-09-07 .. 2026-09-13`** — a second, earlier week, because the weekly review recalculates from
 *this week vs last week* and a single-week fixture can never exercise that path (see the two-week
 table below). **`DE-01` carries only 5 of the 7 days** (`09-14 .. 09-18`) — the partial week, and
@@ -10,6 +10,9 @@ carries `2026-09-21 .. 2026-09-27`** — a second, later week with five consecut
 the only fixture in which the weight mean cannot be computed at all. **`US-02` additionally carries
 `2026-09-21 .. 2026-09-27`** — a second, later week whose 7-day mean equals the first week's
 (74.20 kg), the only fixture in which the "flat for 2 consecutive weeks" rule is reachable.
+**`UK-01` additionally carries `2026-09-21 .. 2026-09-27`** — a second, later week whose mean is
+0.90 kg *higher* (93.87 → 94.77 kg), the only fixture in which the weight trend is **positive**
+and therefore the only place where a sign-blind `abs(trend)` implementation can be caught.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -25,7 +28,7 @@ These are the baselines the fixtures were written against. Read them before read
 | `DE-01` | Jonas Brandt | 34 / M | Berlin | 182 cm | 88.9 → 88.6 kg | 155 g | Push / pull / legs, 3×/wk | none (sleep from a watch) | Manual + photo, never logs at the weekend |
 | `US-01` | Michael Chen | 38 / M | San Francisco | 175 cm | 86.0 → 86.2 kg | 165 g | 5×5, 3–4×/wk | WHOOP | Photo, logs takeout as-is |
 | `US-02` | Sarah Williams | 34 / F | Austin, TX | 168 cm | 74.2 → 74.1 kg (mean 74.20 → 74.20) | 130 g | Upper/lower, 4×/wk | Apple Watch | Photo + manual, drinks on Fridays |
-| `UK-01` | James O'Brien | 41 / M | Manchester | 180 cm | 93.5 → 94.3 kg | 160 g | Squat / bench / deadlift, 3×/wk | Garmin | Manual, estimates loosely |
+| `UK-01` | James O'Brien | 41 / M | Manchester | 180 cm | 93.5 → 94.3 kg (mean 93.87 → 94.77) | 160 g | Squat / bench / deadlift, 3×/wk | Garmin | Manual, estimates loosely |
 | `MX-01` | Carlos Ramírez | 27 / M | Mexico City | 172 cm | 78.0 → 78.3 kg | 145 g | Powerbuilding, 4×/wk | none | Voice, fast and imprecise |
 | `NG-01` | Adaeze Okonkwo | 31 / F | Lagos + London | 165 cm | 70.5 → 70.5 kg | 120 g | Squat / RDL, 3×/wk | Fitbit | Manual, skips days when travelling |
 | `IN-01` | Priya Sharma | 30 / F | London | 158 cm | 61.3 → 61.2 kg | 100 g | Squat / RDL, 3×/wk | none | Voice, describes meals aloud |
@@ -141,13 +144,31 @@ Garmin, logs by hand and estimates generously in both directions.
 
 **Why he exists.** The **liquid-calorie outlier**: Wednesday's three pints of bitter push a
 normal day to 2,540 kcal, and Sunday's roast lamb is the single largest meal in the whole
-fixture set at 1,420 kcal.
+fixture set at 1,420 kcal. In his second week (`09-21 → 09-27`) he is also the **rising trend**:
+the 7-day weight mean goes `93.87 → 94.77 kg`, which makes him the only fixture whose weight
+trend is **positive** — and therefore the only one that can catch a review which reads the size
+of the trend but not its sign.
 
 **Injected failures.** A 1,680 kcal pub dinner including three pints; a full English on
 Saturday; Sunday with no `intake_kcal`; every day above target except one; a 5.8-hour night.
+In the second week: protein is fixed (six of seven days at or above 144 g) and the weight still
+climbs — Sunday's roast plus a late cheese plate is the one 92 g day, the Wednesday pub and the
+Friday kebab are unchanged, and every day still books a "deficit" between 180 and 600 kcal
+against a Garmin burn figure that is roughly 1,000 kcal/day too high.
 
 **What a correct report must say.** His weight is rising while his food log "looks fine"
 because roughly a third of his weekly surplus is drunk. The lever is pints, not plates.
+
+In the second week the answer changes and the discipline is in what the review must **not** say.
+The ledger shows a 439 kcal average deficit and the scale shows `+0.90 kg` (0.95% of bodyweight)
+— both cannot be true, and the scale is the ground truth. So: **do not** read `+0.90` as "falling
+faster than 0.75%" and cut 100 kcal (that branch needs a negative trend; a sign-blind
+`abs(trend)` check fires here, in exactly the wrong direction), and **do not** read it as a
+plateau and add 150 kcal (`0.90` is not flat). No calorie rule in
+`workflows/04-weekly-review.md` applies to a rising trend; the honest output says the expenditure
+estimate is the suspect number and asks him to stop trusting the wrist. Protein does not preempt
+this: at `6/7` the protein rule is silent, which is why the second week had to come *after* he
+fixed it.
 
 ---
 
@@ -232,7 +253,7 @@ Backfilling them would corrupt the same denominator the weekly review runs on.
 
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **82 days / 9 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **89 days / 9 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
@@ -242,7 +263,7 @@ These are the real numbers, not estimates. If your run disagrees, the parser or 
 | `DE-01` | 5 | 598 kcal | 3 | **A partial week: 5 of 7 days logged.** `09-19`/`09-20` absent (not zero); adherence reads `1/5`, not `1/7` |
 | `US-01` | 7 | 687 kcal | 4 | 1 meal logged as `unknown`; Saturday +3,510 kcal (−610) |
 | `US-02` | 14 | 442 / 383 kcal | 4 / 4 | Alcohol + chips; **plateau: identical mean both weeks (74.20 kg), trend `+0.00`**; Friday −390 then −220; W38 Saturday has no Totals → `——`; adherence 4/7 → 5/7 |
-| `UK-01` | 7 | 623 kcal | 3 | Weight rising 93.5 → 94.3 kg; Sunday roast 1,420 kcal |
+| `UK-01` | 14 | 623 / 439 kcal | 3 / 3 | **Rising trend: mean 93.87 → 94.77 kg, `+0.90` = 0.95% of bodyweight**; protein 0/7 → 6/7 in the second week; Sunday roast 1,420 kcal; one `computed` day (W38 Sunday) |
 | `MX-01` | 7 | 373 kcal | 4 | Thursday 48 g protein; Saturday −780; 2 validator warnings |
 | `NG-01` | 7 | 419 kcal | 3 | **One day with no Training section at all** |
 | `IN-01` | 7 | 294 kcal | 3 | Protein rises 56 → 80 g across the week on her own initiative |
@@ -327,12 +348,48 @@ everything else held.
 
 ---
 
+## `UK-01` across its two ISO weeks
+
+| ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
+|---|---|---|---|---|---|---|---|
+| `2026-W38` | 09-14 → 09-20 | 7 | 623 kcal (6 days) | 93.87 kg (7 weigh-ins) | `——` (first week) | 0/7 @160 g | 3 days |
+| `2026-W39` | 09-21 → 09-27 | 7 | 439 kcal | 94.77 kg (7 weigh-ins) | **`+0.90` kg** | 6/7 @160 g | 3 days |
+
+**What a correct review must conclude.** That no calorie rule fires — and that this is the
+answer, not a failure to find one.
+
+`+0.90 kg` is **0.95% of bodyweight**, larger than the 0.75% the first rule is calibrated
+against. An implementation that compares `abs(trend) / weight > 0.0075` therefore fires
+*"falling faster than 0.75% → reduce deficit by 100 kcal"* on a man who is **gaining** a kilo a
+week. Same number, opposite conclusion, and nothing else in the gate suite notices: before this
+week existed, every two-week trend in the set was negative (`CN-01`) or exactly zero (`US-02`).
+
+Two more traps are deliberately removed so that the sign is the *only* thing under test:
+
+- **The plateau rule must stay silent.** `+0.90` is not flat, so "flat for 2 consecutive weeks →
+  +150 kcal" must not be reachable by rounding. A fixture where the gain were small (say
+  `+0.1 kg`) would let a sloppy flatness test pass for the wrong reason.
+- **The protein rule must not preempt.** W38 is `0/7`, and at `< 5 of 7` the protein rule stops
+  the review before it ever gets to the weight. So the second week is the week *after* he fixed
+  it: `6/7`, one Sunday miss (roast + late cheese plate = 92 g). If both weeks had stayed at
+  `0/7`, the wrong-sign bug would be invisible even with a positive trend in the file.
+
+**The ledger is the third trap.** Every day books a deficit of 180–600 kcal, and the week
+averages 439 — while the scale rises 0.9 kg. Those cannot both be true. The Garmin burn figure
+is the number to distrust (his own notes say so), and that is what the review has to say. A
+review that reports "deficit 439 kcal, on track" has read the arithmetic and ignored the only
+measurement in the file that is not an estimate.
+
+---
+
 ## `CN-01` across its two ISO weeks
 
 This is the only persona in the repo whose week-over-week trend is **falling** — `CN-02`'s second
-week has no mean to subtract, and `US-02`'s second week is flat — and therefore the only place where
-the `falling faster than 0.75%` branch of `workflows/04-weekly-review.md` can be checked at all,
-including its precedence against the protein rule.
+week has no mean to subtract, `US-02`'s second week is flat, and `UK-01`'s second week is
+**rising** (that one is the counter-example: a positive trend must not fire this branch either) —
+and therefore the only place where the `falling faster than 0.75%` branch of
+`workflows/04-weekly-review.md` can be checked *with its sign pointing down*, including its
+precedence against the protein rule.
 
 | ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
 |---|---|---|---|---|---|---|---|

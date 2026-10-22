@@ -35,19 +35,19 @@ So these nine personas are deliberately **broken in believable ways**.
 | `DE-01` Jonas Brandt | Berlin, DE | German: bread, sausage, Kantine, Döner | **A partial week — only 5 of 7 days logged**; the adherence denominator |
 | `US-01` Michael Chen | San Francisco, US | Chinese-American takeout | Skipped meal logged as `unknown`; restaurant weekend overshoot |
 | `US-02` Sarah Williams | Austin, US | Mexican-American | Alcohol in the log; hidden calories in chips/queso; **a plateau — two consecutive weeks with the same weight mean** |
-| `UK-01` James O'Brien | Manchester, UK | Pub food, ale, Sunday roast | Liquid calories counted; largest single-meal outlier |
+| `UK-01` James O'Brien | Manchester, UK | Pub food, ale, Sunday roast | Liquid calories counted; largest single-meal outlier; **a rising trend — two weeks whose weight mean goes up 0.90 kg** |
 | `MX-01` Carlos Ramírez | Mexico City, MX | Tacos, quesadillas, barbacoa | One day with severe protein miss (48 g); weekend cheat day |
 | `NG-01` Adaeze Okonkwo | Lagos, NG + London, UK | West African stews, travel week | A full day with **no training section at all**; jet lag |
 | `IN-01` Priya Sharma | London, UK | South Asian vegetarian | Structurally hard protein; iterates toward soya chunks |
 
 **Layout:** each file is one persona, one `# YYYY-MM-DD` heading per logged day — seven headings
-for five of the nine, **fourteen for `CN-01`, `CN-02` and `US-02`** (each carries a second ISO week),
-and **five for `DE-01`**, whose weekend was never logged. That is layout
+for five of the nine, **fourteen for `CN-01`, `CN-02`, `US-02` and `UK-01`** (each carries a second
+ISO week), and **five for `DE-01`**, whose weekend was never logged. That is layout
 **B** in `scripts/parse_log.py`. The number of headings *is* the number of recorded days: a day
 with no heading is **absent**, not zero, and must never be backfilled. The test week is the same
 for everyone: **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable;
-`CN-01` adds the week before it, and `CN-02` and `US-02` the week after, for the three reasons
-`personas.md` records.
+`CN-01` adds the week before it, and `CN-02`, `US-02` and `UK-01` the week after, for the four
+reasons `personas.md` records.
 
 ---
 
@@ -87,9 +87,9 @@ requirement that day is exercising, so the fixture doubles as its own test asser
 # Layer L1 — contract validation. Expect: 0 fatal.
 python3 scripts/validate_log.py examples/fixtures/
 
-# Layer L2 — aggregation. Expect: 9 personas / 82 rows
+# Layer L2 — aggregation. Expect: 9 personas / 89 rows
 #   9 personas x 7 days = 63  +  CN-01's extra week = 7  +  CN-02's extra week = 7
-#   +  US-02's extra week = 7  -  DE-01's two unlogged weekend days = 82
+#   +  US-02's extra week = 7  +  UK-01's extra week = 7  -  DE-01's two unlogged weekend days = 89
 python3 scripts/parse_log.py examples/fixtures/
 ```
 
