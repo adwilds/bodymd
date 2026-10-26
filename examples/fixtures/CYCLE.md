@@ -46,9 +46,9 @@ but they must be *internally consistent* imperfections.
 **4. Run every gate.** All four must pass before anything is committed:
 
 ```bash
-python3 scripts/selftest.py                          # expect 23/23 PASS
+python3 scripts/selftest.py                          # expect 24/24 PASS
 python3 scripts/validate_log.py examples/fixtures/   # expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # expect 89 days / 9 personas
+python3 scripts/parse_log.py    examples/fixtures/   # expect 103 days / 10 personas
 ```
 
 Plus: every relative Markdown link resolves.
@@ -93,7 +93,7 @@ Ordered by value. Strike through an entry when closed, and note the commit.
 | G2 | ~~**Weight missing for 4+ consecutive days**~~ → **CLOSED** by `CN-02` (`2026-09-21 → 09-27`, five consecutive missing days, only 2 weigh-ins): the week's mean and trend print `——`, and T20 pins both sides of the threshold (4 of 7 still computes). It found a real defect: the old aggregator averaged the two stray readings into `64.25 kg` and reported `-0.33 kg`. Commit: *"Close G2 — five blank days are not a week's mean"* | That the trend degrades to `——` instead of averaging two stray weigh-ins into a confident conclusion |
 | ~~G3~~ | ~~**A genuine plateau** — two consecutive weeks with the same mean~~ → **CLOSED** by `US-02` (`2026-09-21 → 09-27`, a second week whose 7-day mean is the identical 74.20 kg): the trend prints `+0.00` and T21 pins it, together with the two things that would hide it — the week's endpoints read `74.4 → 74.1` (`−0.3 kg`, i.e. "still falling"), and its `5/7` adherence sits exactly one day above the protein rule that would otherwise preempt the plateau. Commit: *"Close G3 — two weeks at the same mean, so the plateau rule can fire"* | The `flat for 2 consecutive weeks → increase deficit by 150 kcal` rule. Currently unreachable: no persona has two weeks *and* flat weight |
 | ~~G4~~ | ~~**A persona gaining weight**~~ → **CLOSED** by `UK-01` (`2026-09-21 → 09-27`, a second week whose mean is 0.90 kg *higher*: 93.87 → 94.77 kg). `+0.90 kg` is 0.95% of bodyweight, so the **magnitude** would trip the "faster than 0.75%" branch; only the **sign** stops it. Protein is `6/7` that week, so the protein rule is silent and nothing preempts the weight question. Commit: *"Close G4 — a persona gaining weight, so the 0.75% branch cannot ignore the sign"* | That the "falling faster than 0.75%" branch does not fire on the wrong sign |
-| G5 | **A week spanning an ISO year boundary** (e.g. 2026-12-28 → 2027-01-03) | That week numbering does not silently merge two different weeks into one label |
+| G5 | ~~**A week spanning an ISO year boundary** (e.g. 2026-12-28 → 2027-01-03)~~ → **CLOSED** by `BR-01` (`2026-12-28 → 2027-01-03` is `2026-W53`: seven days, two calendar years; plus `2027-01-04 → 2027-01-10` = `2027-W01`): the persona prints **two** weekly rows, not three, and the trend `−0.40 kg` subtracts week one's mean across the boundary. T23 pins both sides, including the fact that a `(day.year, ISO week)` key really would produce `4 / 3 / 7` and invent `2027-W53`, a week that does not exist. Commit: *"Close G5 — one week can span two calendar years, and it still has one label"* | That week numbering does not silently split one week in two, nor label it with a year that has no such week |
 | G6 | **A persona with no `protein target` in the header** | That the adherence column shows `——` rather than guessing a target |
 | G7 | **Every meal on one day `source: estimated`** | That an all-guess day is visible as such, not averaged in as if it were measured |
 | G8 | **A 30-day single file** | That parsing scales past two weeks without the label/date logic collapsing |

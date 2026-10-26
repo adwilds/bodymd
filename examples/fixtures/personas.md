@@ -1,7 +1,7 @@
-# personas.md — the nine fabricated users
+# personas.md — the ten fabricated users
 
-Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for all nine, so weekly aggregates are
-directly comparable. Four of them deviate deliberately. **`CN-01` additionally carries
+Test week: **2026-09-14 (Mon) → 2026-09-20 (Sun)** for nine of the ten, so weekly aggregates are
+directly comparable. Five of them deviate deliberately. **`CN-01` additionally carries
 `2026-09-07 .. 2026-09-13`** — a second, earlier week, because the weekly review recalculates from
 *this week vs last week* and a single-week fixture can never exercise that path (see the two-week
 table below). **`DE-01` carries only 5 of the 7 days** (`09-14 .. 09-18`) — the partial week, and
@@ -13,6 +13,12 @@ the only fixture in which the weight mean cannot be computed at all. **`US-02` a
 **`UK-01` additionally carries `2026-09-21 .. 2026-09-27`** — a second, later week whose mean is
 0.90 kg *higher* (93.87 → 94.77 kg), the only fixture in which the weight trend is **positive**
 and therefore the only place where a sign-blind `abs(trend)` implementation can be caught.
+
+**`BR-01` is the one persona that cannot share the September test week.** It exists to bracket an
+**ISO year boundary**, and there is exactly one of those per year: `2026-12-28 .. 2027-01-03`
+(ISO `2026-W53`, seven days spanning two calendar years) plus `2027-01-04 .. 2027-01-10`
+(ISO `2027-W01`). Its numbers are not comparable to the September weeks and do not need to be —
+the question it answers is *which week a day belongs to*, not how much anyone ate.
 
 These are the baselines the fixtures were written against. Read them before reading the logs
 — several "mistakes" in the logs are intentional consequences of the baseline, not typos.
@@ -32,6 +38,7 @@ These are the baselines the fixtures were written against. Read them before read
 | `MX-01` | Carlos Ramírez | 27 / M | Mexico City | 172 cm | 78.0 → 78.3 kg | 145 g | Powerbuilding, 4×/wk | none | Voice, fast and imprecise |
 | `NG-01` | Adaeze Okonkwo | 31 / F | Lagos + London | 165 cm | 70.5 → 70.5 kg | 120 g | Squat / RDL, 3×/wk | Fitbit | Manual, skips days when travelling |
 | `IN-01` | Priya Sharma | 30 / F | London | 158 cm | 61.3 → 61.2 kg | 100 g | Squat / RDL, 3×/wk | none | Voice, describes meals aloud |
+| `BR-01` | Rafael Souza | 36 / M | São Paulo | 177 cm | 88.4 → 87.4 kg (mean 88.40 → 88.00) | 155 g | Push / pull / legs + Sat upper, 4×/wk | none (sleep from the phone) | Photo + manual, voice in the gym, churrasco at the weekend |
 
 ---
 
@@ -251,9 +258,52 @@ Backfilling them would corrupt the same denominator the weekly review runs on.
 
 ---
 
+## 10. BR-01 · Rafael Souza
+
+**Context.** 36, São Paulo, operations at a family logistics firm. Pão na chapa and a pingado at
+the corner before work, prato feito at a buffet at lunch, churrasco at the weekend and often at his
+parents' on Sunday. Trains push / pull / legs plus a Saturday upper session, four times a week, at
+a gym two blocks from the office. No wearable — sleep comes from the phone.
+
+**Why he exists.** He is the **ISO year boundary** case, and the only persona whose dates are not in
+September. His first week is `2026-12-28 → 2027-01-03`: seven days that are **one** ISO week
+(`2026-W53`) and **two** calendar years. Nothing about a week's arithmetic changes at midnight on
+31 December, but the *label* does. Key the week on `(day.year, ISO week number)` and those seven
+days split into four and three — and the second block is printed as `2027-W53`, a week that does
+not exist, because ISO 2027 has 52 weeks. His second week is `2027-01-04 → 2027-01-10`
+(`2027-W01`): a different week in a different ISO year, which the trend must still subtract from.
+`selftest.py`'s **T23** pins all of it.
+
+**Injected failures.** A réveillon churrasco that puts 3,310 kcal in against 2,700 out — the only
+negative-deficit day in the file, and the only drink line, whose ~400 kcal of ethanol the `P/C/F`
+field deliberately cannot carry (alcohol is 7 kcal/g; the macro formula is not). A 4.6-hour night
+on New Year's Day, which is also the one day with **no `## Training` section** and no session at
+all. One missing weigh-in (`01-01`: a *recorded* day with `unknown`, not an absent day). A 51 g
+protein day at 2,580 kcal — pastel, caldo de cana, açaí with condensed milk, pizza and a beer —
+which is the severe miss, on a day he trained. Three traceable `edited:` corrections, including a
+picanha portion he served himself twice.
+
+**What a correct report must say.** Three things, in this order:
+
+1. **The week label.** `2026-W53`, seven days, `2026-12-28 .. 2027-01-03`. Not two weeks, not
+   `2027-W53`, and New Year's Day is not "day 1 of week 1". His second week is `2027-W01` — the
+   first *different* week, not the first week.
+2. **Week one is the first week of this persona**, so its trend is `——` because there is no prior
+   week to subtract — not because the boundary confused anything. Protein is `3/7`, so the protein
+   rule fires first and the réveillon day is a surplus to name, not a failure to correct.
+3. **Week two: no calorie rule fires, and that is the answer.** `88.40 → 88.00 kg` is `−0.40 kg`
+   (0.45% of bodyweight) — under the 0.75% line by magnitude, and `|−0.40|` is far from flat — and
+   protein at `5/7` does not preempt it. The correct output is "hold the plan".
+
+A report that prints three BR-01 rows, or prints a trend of `−0.25 kg`, has keyed the week on the
+calendar year. A report that calls 01-01 the start of the week has done the same thing from the
+other side.
+
+---
+
 ## Aggregates to check after running `parse_log.py`
 
-Measured output of `scripts/parse_log.py examples/fixtures/` — **89 days / 9 personas**.
+Measured output of `scripts/parse_log.py examples/fixtures/` — **103 days / 10 personas**.
 These are the real numbers, not estimates. If your run disagrees, the parser or a fixture changed.
 
 | ID | Days | Avg deficit | Training days | Notable |
@@ -267,6 +317,7 @@ These are the real numbers, not estimates. If your run disagrees, the parser or 
 | `MX-01` | 7 | 373 kcal | 4 | Thursday 48 g protein; Saturday −780; 2 validator warnings |
 | `NG-01` | 7 | 419 kcal | 3 | **One day with no Training section at all** |
 | `IN-01` | 7 | 294 kcal | 3 | Protein rises 56 → 80 g across the week on her own initiative |
+| `BR-01` | 14 | 269 / 490 kcal | 4 / 4 | **`2026-W53` → `2027-W01`: one week spanning two calendar years.** W53 is 7 days with 6 weigh-ins; 1 negative-deficit day (réveillon −610); 1 weigh-in `unknown`; 1 day with no Training section; 51 g protein day |
 
 **Note on `DE-01`:** it is the only **partial week** in the set — 5 recorded days inside a 7-day ISO
 week. Its weekly row prints `5` days and `1/5`, never `1/7`: the denominator is the days that were
@@ -384,12 +435,13 @@ measurement in the file that is not an estimate.
 
 ## `CN-01` across its two ISO weeks
 
-This is the only persona in the repo whose week-over-week trend is **falling** — `CN-02`'s second
-week has no mean to subtract, `US-02`'s second week is flat, and `UK-01`'s second week is
-**rising** (that one is the counter-example: a positive trend must not fire this branch either) —
-and therefore the only place where the `falling faster than 0.75%` branch of
-`workflows/04-weekly-review.md` can be checked *with its sign pointing down*, including its
-precedence against the protein rule.
+This is the only persona in the repo whose week-over-week trend is **falling fast enough to reach**
+the 0.75% branch — `CN-02`'s second week has no mean to subtract, `US-02`'s second week is flat,
+`UK-01`'s second week is **rising** (that one is the counter-example: a positive trend must not fire
+this branch either), and `BR-01`'s second week is falling at only `−0.40 kg` (0.45% of bodyweight,
+under the line by magnitude, so it never gets to the rule). That makes this pair the only place
+where the `falling faster than 0.75%` branch of `workflows/04-weekly-review.md` can be checked
+*with its sign pointing down*, including its precedence against the protein rule.
 
 | ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
 |---|---|---|---|---|---|---|---|
@@ -412,3 +464,44 @@ the last. Using endpoints would let two days of water weight decide a whole week
 `82.4 − 81.6 = −0.8 kg` looks like a bigger drop than the true `−0.71 kg`, and neither number
 is the one the rules are calibrated against.
 
+---
+
+## `BR-01` across its two ISO weeks
+
+| ISO week | Dates | Days | Avg deficit | Weight mean | Trend | Protein adherence | Training |
+|---|---|---|---|---|---|---|---|
+| `2026-W53` | 12-28 → 01-03 | 7 | 269 kcal | 88.40 kg (6 weigh-ins) | `——` (first week) | 3/7 @155 g | 4 days |
+| `2027-W01` | 01-04 → 01-10 | 7 | 490 kcal | 88.00 kg (7 weigh-ins) | **`−0.40` kg** | 5/7 @155 g | 4 days |
+
+Read the dates, not the labels: week one **starts in 2026 and ends in 2027**, and it is still one
+week. `2026-12-28 .. 2026-12-31` are four calendar-2026 days; `2027-01-01 .. 2027-01-03` are three
+calendar-2027 days; together they are ISO week **2026-W53**, because ISO weeks belong to the ISO
+week-year, which is the year that owns the week's Thursday — `2026-12-31`. The next Monday,
+`2027-01-04`, opens `2027-W01`.
+
+**What a correct review must conclude.** For week two: **no calorie rule fires.** `−0.40 kg` is
+0.45% of bodyweight (the 0.75% line would need 0.66 kg), so the "falling faster than 0.75%"
+branch is silent by magnitude; `|−0.40|` is nowhere near flat, so the plateau branch is silent
+too; and protein at `5/7` is above the `< 5 of 7` line, so the protein rule does not preempt it.
+"Hold the plan" is the answer, and it is an answer this time, not an absence of one.
+
+**The defect this fixture exists to catch.** Re-key the week on `(day.year, ISO week number)` and
+the same file prints:
+
+| what a naive key prints | days | weigh-ins | weight mean | trend |
+|---|---|---|---|---|
+| `2026-W53` | 4 | 4 | 88.25 kg | `——` |
+| `2027-W01` | 7 | 7 | 88.00 kg | **`−0.25` kg** |
+| `2027-W53` | 3 | 2 | `——` | `——` |
+
+Three rows instead of two, a trend of `−0.25` instead of `−0.40` (it subtracted a four-day mean),
+and a label — `2027-W53` — for a week that does not exist. Every number in that table looks
+plausible. That is the problem: the 4-day mean `88.25` is a real average of real readings, and
+`−0.25 kg` is inside the target band, so a review built on it would say "hold the plan" for the
+wrong reason. `selftest.py` T23 asserts both sides — the correct grouping *and* the fact that the
+naive key really does produce `4 / 3 / 7` with a phantom `2027-W53`.
+
+**Why week one is 6 weigh-ins, not 7.** `01-01` is `weight_kg: unknown` — a *recorded* day with a
+missing number (he woke at 11:30 after the party), which is a different thing from `DE-01`'s two
+**absent** days. 6 of 7 is still above the 4-reading floor, so the mean and the `——` trend here are
+real numbers, not a degraded path.

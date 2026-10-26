@@ -149,9 +149,9 @@ python3 scripts/validate_log.py log/
 健康仓库的预期输出：
 
 ```bash
-python3 scripts/selftest.py                          # 23 项 → 23/23 PASS
+python3 scripts/selftest.py                          # 24 项 → 24/24 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → 致命 0，警告 2（两条都是故意的）
-python3 scripts/parse_log.py    examples/fixtures/   # → 89 天 / 9 个档案
+python3 scripts/parse_log.py    examples/fixtures/   # → 103 天 / 10 个档案
 ```
 
 **那 2 条警告是故意的** —— 用来证明"缺一个可选字段会降级为警告，而不是拒绝整个文件"。

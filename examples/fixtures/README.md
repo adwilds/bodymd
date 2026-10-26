@@ -8,7 +8,7 @@ Every persona file carries a `SYNTHETIC` marker on its first line, per the proje
 synthetic-data rule. To confirm the whole set is marked:
 
 ```bash
-grep -L "^# SYNTHETIC" examples/fixtures/{CN,DE,US,UK,MX,NG,IN}-*.md    # expect: no output
+grep -L "^# SYNTHETIC" examples/fixtures/{CN,DE,US,UK,MX,NG,IN,BR}-*.md    # expect: no output
 ```
 
 ---
@@ -22,7 +22,7 @@ Without realistic fixtures, every test passes for the wrong reason: an AI looks 
 tidy data and fails on the data people actually produce — a skipped lunch, a scale that is
 out of batteries, a 4-hour night before a heavy session, a weekend of drinking.
 
-So these nine personas are deliberately **broken in believable ways**.
+So these ten personas are deliberately **broken in believable ways**.
 
 ---
 
@@ -39,15 +39,18 @@ So these nine personas are deliberately **broken in believable ways**.
 | `MX-01` Carlos Ramírez | Mexico City, MX | Tacos, quesadillas, barbacoa | One day with severe protein miss (48 g); weekend cheat day |
 | `NG-01` Adaeze Okonkwo | Lagos, NG + London, UK | West African stews, travel week | A full day with **no training section at all**; jet lag |
 | `IN-01` Priya Sharma | London, UK | South Asian vegetarian | Structurally hard protein; iterates toward soya chunks |
+| `BR-01` Rafael Souza | São Paulo, BR | Brazilian: prato feito, churrasco, feijoada | **A week spanning an ISO year boundary** — `2026-12-28 → 2027-01-03` is one ISO week (`2026-W53`) across two calendar years |
 
 **Layout:** each file is one persona, one `# YYYY-MM-DD` heading per logged day — seven headings
-for five of the nine, **fourteen for `CN-01`, `CN-02`, `US-02` and `UK-01`** (each carries a second
-ISO week), and **five for `DE-01`**, whose weekend was never logged. That is layout
+for four of the ten, **fourteen for `CN-01`, `CN-02`, `US-02`, `UK-01` and `BR-01`** (each carries a
+second ISO week), and **five for `DE-01`**, whose weekend was never logged. That is layout
 **B** in `scripts/parse_log.py`. The number of headings *is* the number of recorded days: a day
-with no heading is **absent**, not zero, and must never be backfilled. The test week is the same
-for everyone: **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable;
+with no heading is **absent**, not zero, and must never be backfilled. Nine of the ten share the
+test week **2026-09-14 (Mon) → 2026-09-20 (Sun)**, so cross-persona aggregates are comparable;
 `CN-01` adds the week before it, and `CN-02`, `US-02` and `UK-01` the week after, for the four
-reasons `personas.md` records.
+reasons `personas.md` records. **`BR-01` is the exception**: it sits on `2026-12-28 → 2027-01-10`
+because an ISO year boundary only happens once a year, and it is not comparable to the September
+weeks — that is not what it is for.
 
 ---
 
@@ -87,9 +90,10 @@ requirement that day is exercising, so the fixture doubles as its own test asser
 # Layer L1 — contract validation. Expect: 0 fatal.
 python3 scripts/validate_log.py examples/fixtures/
 
-# Layer L2 — aggregation. Expect: 9 personas / 89 rows
-#   9 personas x 7 days = 63  +  CN-01's extra week = 7  +  CN-02's extra week = 7
-#   +  US-02's extra week = 7  +  UK-01's extra week = 7  -  DE-01's two unlogged weekend days = 89
+# Layer L2 — aggregation. Expect: 10 personas / 103 rows
+#   10 personas x 7 days = 70  +  CN-01's extra week = 7  +  CN-02's extra week = 7
+#   +  US-02's extra week = 7  +  UK-01's extra week = 7  +  BR-01's second week = 7
+#   -  DE-01's two unlogged weekend days = 103
 python3 scripts/parse_log.py examples/fixtures/
 ```
 

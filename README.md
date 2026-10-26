@@ -182,18 +182,20 @@ notes: [`docs/run-with-any-model.md`](docs/run-with-any-model.md).
 ### Path C — just run the tests
 
 ```bash
-python3 scripts/selftest.py                          # 23 checks → expect 23/23 PASS
+python3 scripts/selftest.py                          # 24 checks → expect 24/24 PASS
 python3 scripts/validate_log.py examples/fixtures/   # → expect 0 fatal, 2 warnings
-python3 scripts/parse_log.py    examples/fixtures/   # → expect 89 days / 9 personas
+python3 scripts/parse_log.py    examples/fixtures/   # → expect 103 days / 10 personas
 ```
 
-The third command reads nine test users — Chinese, Chinese-American, British, Mexican,
-Nigerian, South Asian, German, and two more — one week each, except one who logged **five days of
-seven** and three who carry an extra week (one with **five consecutive days of no weigh-ins**, so
-her weekly weight trend cannot be computed at all; another with **two consecutive weeks at the same
-mean**, so the plateau rule finally has data to run on). **They are fabricated, and they are supposed
-to be messy:** a skipped lunch, a scale with dead batteries, a 48 g protein day, a day with no
-training logged at all, and a week where two days are missing outright. Disclosure and red lines:
+The third command reads ten test users — Chinese, Chinese-American, British, Mexican,
+Nigerian, South Asian, German, Brazilian, and two more — one week each, except one who logged
+**five days of seven** and five who carry a second week (one with **five consecutive days of no
+weigh-ins**, so her weekly weight trend cannot be computed at all; another with **two consecutive
+weeks at the same mean**, so the plateau rule finally has data to run on; a third whose two weeks
+**straddle New Year**, so one of its seven-day weeks starts in 2026 and ends in 2027). **They are
+fabricated, and they are supposed to be messy:** a skipped lunch, a scale with dead batteries, a
+48 g protein day, a day with no training logged at all, a New Year's Eve churrasco at 3,310 kcal,
+and a week where two days are missing outright. Disclosure and red lines:
 [`examples/fixtures/README.md`](examples/fixtures/README.md).
 
 The **2 warnings are deliberate.** They exist to prove the validator drops a missing optional

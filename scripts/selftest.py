@@ -31,13 +31,15 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "examples" / "fixtures"
 
 # 期望值 —— 全部来自 docs/testing.md 与 examples/fixtures/personas.md 的公开承诺。
-EXPECTED_PERSONAS = 9
+EXPECTED_PERSONAS = 10
 # CN-01 是两周（09-07..09-13 + 09-14..09-20）；CN-02 也是两周（09-14..09-20 + 09-21..09-27，
 # 后一周连续 5 天没称重）；US-02 也是两周（09-14..09-20 + 09-21..09-27，两周均值相同 = 平台期）；
 # UK-01 也是两周（09-14..09-20 + 09-21..09-27，第二周均值高 0.90 kg = 在增重）；
-# DE-01 只记了 5 天（09-14..09-18）；其余 5 人是 09-14..09-20 一周。
-# 9 人各一周 = 63，+ 四个第二周 7x4 = 28 - DE-01 少记的 2 = 89
-EXPECTED_DAYS = 89
+# DE-01 只记了 5 天（09-14..09-18）；其余 4 人是 09-14..09-20 一周。
+# BR-01 是两周，但**不在九月**：2026-12-28..2027-01-03（ISO 2026-W53，横跨日历年边界）
+#   + 2027-01-04..01-10（ISO 2027-W01）。
+# 10 人各一周 = 70，+ 五个第二周 7x5 = 35 - DE-01 少记的 2 = 103
+EXPECTED_DAYS = 103
 EXPECTED_WARNING_FILES = {"MX-01.md"}   # 只有这个档案带故意的警告
 # Totals 缺 intake_kcal、由脚本逐餐累加的天。两种成因都算：
 #   a) 填了 Totals 但漏了 intake   → 摄入可重算，消耗也有 → 缺口算得出
@@ -94,7 +96,8 @@ SAMPLE_SOURCE_DOCS = [
     "examples/fixtures/CYCLE.md",
 ]
 
-PERSONA_IDS = ["CN-01", "CN-02", "DE-01", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01"]
+PERSONA_IDS = ["CN-01", "CN-02", "DE-01", "US-01", "US-02", "UK-01", "MX-01", "NG-01", "IN-01",
+               "BR-01"]
 
 
 class Report:
@@ -534,8 +537,10 @@ def main(argv: list) -> int:
     # CN-02 之所以也在里面：它要证明读数不足时的退化，而退化只有存在"上一周"时才看得见。
     # US-02 之所以也在里面：它要证明「连续两周均值相同」这条平台期规则真的可达（见 T21）。
     # UK-01 之所以也在里面：它要证明趋势的**符号**被读对了 —— 一个在增重的人（见 T22）。
+    # BR-01 之所以也在里面：它要证明**跨 ISO 年边界**的一周仍是一周 —— 7 天横跨两个日历年，
+    # 却必须只属于一个 ISO 周标签（2026-W53），且下一周（2027-W01）仍能减出这一周的均值（见 T23）。
     multi_week = {lab for lab, weeks in label_weeks.items() if len(weeks) > 1}
-    multi_week_expected = {"CN-01", "CN-02", "US-02", "UK-01"}
+    multi_week_expected = {"CN-01", "CN-02", "US-02", "UK-01", "BR-01"}
 
     rows18 = parse_log.weekly_rows(records, {})
     cn01_rows = [r for r in rows18 if r["label"] == "CN-01"]
@@ -600,7 +605,7 @@ def main(argv: list) -> int:
     distinct_targets = len({v for v in targets19.values() if v}) >= 6
 
     ok19 = (not mismatch19
-            and len(expected19) == 13
+            and len(expected19) == 15
             and at_boundary
             and below_boundary
             and distinct_targets)
@@ -734,6 +739,57 @@ def main(argv: list) -> int:
               f"趋势={gain} 占体重={pct_text}（>0.75% 才算有牙） "
               f"蛋白={None if j39 is None else j39['adherence']} "
               f"称重={None if j39 is None else j39['weigh_ins']}")
+
+    # --- T23 跨 ISO 年的周：一周横跨两个日历年，仍必须是一个标签 ----------------
+    # 动机：ISO 周 2026-W53 是 2026-12-28 .. 2027-01-03 —— 7 天里前 4 天在 2026 年，
+    #       后 3 天在 2027 年。`iso_week_of` 返回的是 `(isocalendar()[0], isocalendar()[1])`，
+    #       第一个分量是 **ISO 周年**，不是 `day.year`。写成 `(day.year, isocalendar()[1])`
+    #       的实现会把同一周拆成两块：4 天挂在 (2026, 53)、3 天挂在 **(2027, 53)**，
+    #       而 2027-W53 **不存在**（2027 只有 52 个 ISO 周）。于是那一周会被打印成两行，
+    #       第二行还是对着 4 天均值去减 —— 趋势、均值、蛋白分母三项同时错。
+    #       在 BR-01 存在之前，这个集合里的每一天都落在 2026-09-07 .. 2026-09-27 之间，
+    #       所以「年份分量取错」这件事一次也没被数据碰过。
+    #
+    # 这条断言钉住五件事，少一件这个缺口就只是「有数据」，不是「可测」：
+    #   ① 两周仍是两行 —— 边界没有被拆成三行
+    #   ② 第一行 7 天 / 6 次称重、均值 88.40 kg、趋势 `——`（它是这个档案的第一周）
+    #   ③ 第二行趋势 −0.40 kg —— 减法**跨过了年边界**，而不是因为年份变了就重新开始
+    #   ④ 这一周里既有 2026 年的日子也有 2027 年的，但它们的 ISO 周年**只有 2026** 一个
+    #   ⑤ 朴素键（`day.year`）确实会得到 4/3/7 三块，且真的会造出 `2027-W53`
+    # 另外：第二周蛋白 5/7，正好在 `< 5 才拦` 的边界之上 —— 否则蛋白规则先把结论截走，
+    # 趋势写错也看不出来（与 T21/T22 的理由相同）。
+    br01_rows = {r["week"]: r for r in rows19 if r["label"] == "BR-01"}
+    b53, b01 = br01_rows.get((2026, 53)), br01_rows.get((2027, 1))
+
+    br01_records = sorted((r for r in records if r.label == "BR-01"), key=lambda r: r.day)
+    w53_days = [r for r in br01_records if parse_log.iso_week_of(r.day) == (2026, 53)]
+    calendar_years = {r.day.year for r in w53_days}
+    iso_years = {parse_log.iso_week_of(r.day)[0] for r in w53_days}
+
+    naive_groups = {}
+    for r in br01_records:
+        naive_groups.setdefault((r.day.year, r.day.isocalendar()[1]), []).append(r)
+    naive_sizes = sorted(len(v) for v in naive_groups.values())
+
+    ok23 = (len(br01_rows) == 2
+            and b53 is not None and b53["days"] == 7 and b53["weigh_ins"] == 6
+            and b53["weight_mean"] is not None and abs(b53["weight_mean"] - 88.40) < 0.005
+            and b53["trend"] is None
+            and b01 is not None and b01["days"] == 7
+            and b01["trend"] is not None and abs(b01["trend"] - (-0.40)) < 0.005
+            and calendar_years == {2026, 2027}
+            and iso_years == {2026}
+            and naive_sizes == [3, 4, 7]
+            and (2027, 53) in naive_groups
+            and b01["adherence"] == "5/7")
+    rep.check("T23 跨 ISO 年的周不被拆开：2026-W53 是一行，且不存在 2027-W53", ok23,
+              f"BR-01 周={[r['week'] for r in br01_rows.values()]} "
+              f"W53 天={None if b53 is None else b53['days']}/称重{None if b53 is None else b53['weigh_ins']}"
+              f"/均值{None if b53 is None else b53['weight_mean']} "
+              f"W01 趋势={None if b01 is None else b01['trend']} "
+              f"周内日历年={sorted(calendar_years)} ISO 周年={sorted(iso_years)} "
+              f"朴素键分块={naive_sizes} 含2027-W53={(2027, 53) in naive_groups} "
+              f"W01 蛋白={None if b01 is None else b01['adherence']}")
 
     return rep.summary()
 
